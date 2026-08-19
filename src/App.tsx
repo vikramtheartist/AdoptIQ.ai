@@ -195,10 +195,11 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
     window.addEventListener('resize', resize);
     resize();
 
+    // UPDATED COLOR PALETTE: Matching the Lavender, Deep Blue, and Cyan reference
     const waves = [
-      { color: 'rgba(239, 68, 68, 0.45)', speed: 0.04, shift: 0 },       // Soft Red
-      { color: 'rgba(59, 130, 246, 0.45)', speed: 0.05, shift: 2.1 },    // Soft Blue
-      { color: 'rgba(16, 185, 129, 0.45)', speed: 0.06, shift: 4.2 },    // Soft Green
+      { color: 'rgba(192, 132, 252, 0.55)', speed: 0.04, shift: 0 },       // Lavender / Light Purple
+      { color: 'rgba(37, 99, 235, 0.55)', speed: 0.05, shift: 2.1 },        // Deep Royal Blue
+      { color: 'rgba(56, 189, 248, 0.55)', speed: 0.06, shift: 4.2 },       // Bright Cyan / Light Blue
     ];
 
     const draw = () => {
@@ -209,7 +210,6 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
       const isGenerating = state === 'analyzing' || state === 'submitting';
       const isTyping = state === 'listening';
       
-      // Scaled up amplitude by a further 20% to fill the new taller 432px container
       let targetAmp = 8.5; // Idle
       if (isTyping) targetAmp = 43 + (activity * 26);
       if (isGenerating) targetAmp = 120;
@@ -258,7 +258,7 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: '84%', 
-        height: '432px', // Increased height by another 20% (up from 360px)
+        height: '432px',
         zIndex: 0,
         pointerEvents: 'none',
         mixBlendMode: 'multiply',
