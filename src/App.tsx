@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown } from 'lucide-react';
-import { generateDynamicDiagnosis, DynamicDiagnosisPayload } from './services/aiDiagnosis';
+import { GoogleGenAI, Type, Schema } from '@google/genai';
 
 type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
 type EngineState = 'diagnose' | 'analyzing' | 'results';
@@ -19,7 +19,7 @@ type Diagnosis = {
   confidence: number;
   behavioralPattern: string;
   psychologicalDriver: string;
-  strategicPrescription?: string;
+  strategicPrescription: string;
   diagnosis: string;
   signals: { label: string; detail: string; tone: 'coral' | 'blue' | 'lavender' }[];
   interventions: Intervention[];
@@ -48,10 +48,10 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Search intent is unserved', detail: 'Relevant queries end without a next action.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'In-Product Banners', description: 'Non-intrusive banners within relevant applications.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Email Marketing', description: 'Segmented campaigns highlighting concrete ROI and new features.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Leadership Communications', description: 'Top-down announcements from organizational leaders.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating quick wins.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'In-Product Banners', description: 'Non-intrusive banners within relevant applications and active workspaces.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Email Marketing', description: 'Segmented campaigns highlighting concrete ROI and newly launched capabilities.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Leadership Communications', description: 'Top-down announcements and endorsements from team leads.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating fast tactical wins on internal hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already are.',
   },
@@ -60,7 +60,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 85,
     behavioralPattern: 'Value ambiguity',
     psychologicalDriver: 'Unclear reward',
-    strategicPrescription: 'Shift landing copy from feature descriptions to quantified before/after outcomes, and add an interactive ROI calculator above the fold.',
+    strategicPrescription: 'Shift landing copy from abstract feature descriptions to quantified before/after outcomes, and add an interactive ROI calculator above the fold.',
     diagnosis: 'Users understand that the capability exists, but the path from trying it to a meaningful outcome is not compelling enough to create intent.',
     signals: [
       { label: 'High awareness, low intent', detail: 'Recognition does not translate into active trial.', tone: 'coral' },
@@ -71,7 +71,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { title: 'Interactive ROI Calculator', description: 'Quantify exact hours and dollars saved above the fold.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Side-by-Side Workflow Comparison', description: 'Contrast 6 manual steps vs. 1 automated click to prove speed.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Instant Sandbox Preview', description: 'Let users test automations on sample data without signup.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Quantified Metric Testimonials', description: 'Surface concrete stats (e.g., "Reclaimed 18.5 hrs/week").', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Quantified Metric Testimonials', description: 'Surface concrete stats (e.g., "Reclaimed 18.5 hrs/week for 6-person team").', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Focus on benefits, not just features. Show, don’t just tell. Appeal to their immediate needs and aspirations.',
   },
@@ -88,30 +88,30 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Erratic cursor movement', detail: 'Detected hovering over empty canvas areas.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks into intuitive sub-actions.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'AI-Powered Onboarding Bots', description: 'Smart assistants resolving setup questions in real-time.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Single Sign-On (SSO) & Pre-configuration', description: 'Fast setup with pre-filled user data.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'In-Product Help & Tooltips', description: 'Contextual tips explaining features at moment of need.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'In-Product Help & Tooltips', description: 'Contextual tips explaining features right at the point of action.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Simplicity, clarity, and immediate gratification. Reduce cognitive load and provide clear pathways.',
   },
   PROFICIENT: {
     stageLabel: 'Mastery breakdown',
-    confidence: 84,
+    confidence: 94,
     behavioralPattern: 'Habit interruption',
-    psychologicalDriver: 'Low reinforcement',
+    psychologicalDriver: 'High operational friction',
     strategicPrescription: 'Default to a visual UI, enable a plain-text command palette (Cmd+K) with inline shortcut hints, and introduce advanced syntax gradually via contextual micro-prompts.',
     diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
     signals: [
-      { label: 'Strong first session', detail: 'Initial value is visible and measurable.', tone: 'coral' },
-      { label: 'Week-two retention drops', detail: 'Repeat behavior is not forming after day 7.', tone: 'blue' },
-      { label: 'Workflow fragmentation', detail: 'Users leave the product to complete manual routines.', tone: 'lavender' },
+      { label: 'Reverted to manual clicks', detail: 'High task completion drop-off due to multi-step rule complexity.', tone: 'coral' },
+      { label: 'Week-two retention drop-off', detail: 'Repeat habits failing to form after first session.', tone: 'blue' },
+      { label: 'Lack of automated assistance', detail: 'Users exit to manual routines when cognitive friction spikes.', tone: 'lavender' },
     ],
     interventions: [
       { title: 'Automated Task Support', description: 'Copilot suggests shortcuts and automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Advanced Tutorials & Sandbox', description: 'In-depth sessions covering syntax and shortcut mastery.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-      { title: 'User Forums & Community QA', description: 'Peer support spaces for continuous learning.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'In-App Surveys & Feedback Prompts', description: 'Quick ways to identify specific syntax hurdles.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Inline Visual Rule-Builder', description: 'Replace raw syntax and multi-step modals with natural-language block builders.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Contextual Keystroke Cues', description: 'Surface non-intrusive micro-hints showing fast keys during manual actions.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Personalized Habit Loops', description: 'Prompt one-click execution for repetitive multi-click sequences.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
   },
@@ -139,7 +139,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
 
 const suggestions = [
   { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because the ROI and concrete benefits are ambiguous.', stage: 'DESIRE' as AdoptStage },
-  { text: 'Users complete the first workflow successfully, but week-two retention drops off because the keyboard shortcuts and advanced syntax are too complex to build a habit.', stage: 'PROFICIENT' as AdoptStage },
+  { text: 'Teams try the new automation rules once, but revert to manual clicks because they found the multi-step rules slow, hard, and lacking automated task support.', stage: 'PROFICIENT' as AdoptStage },
   { text: 'Feature discovery is under 5%', stage: 'AWARE' as AdoptStage },
 ];
 
@@ -207,12 +207,35 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
-  const classifyPromptFallback = useCallback((text: string): AdoptStage => {
+  // Immediate deterministic heuristic classification
+  const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
-    if (q.includes('share') || q.includes('team') || q.includes('scale') || q.includes('collaborat') || q.includes('champion')) return 'TRANSFORM';
-    if (q.includes('shortcut') || q.includes('syntax') || q.includes('habit') || q.includes('retention') || q.includes('week-two') || q.includes('complex') || q.includes('revert') || q.includes('proficient')) return 'PROFICIENT';
-    if (q.includes('why') || q.includes('value') || q.includes('benefit') || q.includes('roi') || q.includes('trial') || q.includes('landing')) return 'DESIRE';
-    if (q.includes('find') || q.includes('discover') || q.includes('see') || q.includes('aware') || q.includes('5%')) return 'AWARE';
+    if (q.includes('share') || q.includes('team') || q.includes('scale') || q.includes('collaborat') || q.includes('champion') || q.includes('advoca')) {
+      return 'TRANSFORM';
+    }
+    if (
+      q.includes('shortcut') ||
+      q.includes('syntax') ||
+      q.includes('rules') ||
+      q.includes('slow') ||
+      q.includes('hard') ||
+      q.includes('complex') ||
+      q.includes('habit') ||
+      q.includes('manual') ||
+      q.includes('revert') ||
+      q.includes('retention') ||
+      q.includes('automated task') ||
+      q.includes('support') ||
+      q.includes('proficient')
+    ) {
+      return 'PROFICIENT';
+    }
+    if (q.includes('why') || q.includes('roi') || q.includes('value') || q.includes('benefit') || q.includes('landing') || q.includes('trial') || q.includes('desire')) {
+      return 'DESIRE';
+    }
+    if (q.includes('discover') || q.includes('aware') || q.includes('5%') || q.includes('find') || q.includes('visibility') || q.includes('banner')) {
+      return 'AWARE';
+    }
     return 'OPEN';
   }, []);
 
@@ -224,45 +247,115 @@ export default function App() {
     return () => window.clearInterval(phaseTimer);
   }, [engineState]);
 
-  const startDiagnosis = async (customQuery?: string) => {
+  const runDiagnosis = async (customQuery?: string) => {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
-    // Set fallback stage first
-    const detected = classifyPromptFallback(textToAnalyze);
-    setActiveStage(detected);
+    // 1. Immediately apply rock-solid deterministic heuristic stage
+    const detectedStage = classifyInput(textToAnalyze);
+    setActiveStage(detectedStage);
 
     setWaveState('submitting');
     setEngineState('analyzing');
     setPhaseIndex(0);
 
-    try {
-      const aiResult: DynamicDiagnosisPayload = await generateDynamicDiagnosis(textToAnalyze);
-      const newDiagnosis: Diagnosis = {
-        stageLabel: aiResult.stageLabel,
-        confidence: aiResult.confidence,
-        behavioralPattern: aiResult.behavioralPattern,
-        psychologicalDriver: aiResult.psychologicalDriver,
-        strategicPrescription: aiResult.strategicPrescription,
-        diagnosis: aiResult.problemSummary,
-        signals: aiResult.signals,
-        interventions: aiResult.interventions,
-        takeaway: aiResult.takeaway,
-      };
+    // 2. Try Calling Gemini API for hyper-customized payload
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        const systemInstruction = `
+You are the ADOPT Intelligence Engine. Analyze product adoption friction and diagnose which ADOPT stage is broken:
+- AWARE: Feature discovery, visibility, exposure, banners, announcements.
+- DESIRE: Value clarity, motivation, ROI calculation, trial conversion.
+- OPEN: Activation, onboarding, blank canvas, setup friction, SSO.
+- PROFICIENT: Habit formation, keyboard shortcuts, advanced syntax, complex rules, week-2 retention drop-offs, slow/hard friction.
+- TRANSFORM: Team sharing, collaboration, champion programs, organizational scaling.
 
-      setDynamicData((prev) => ({
-        ...prev,
-        [aiResult.stage]: newDiagnosis,
-      }));
-      setActiveStage(aiResult.stage);
-    } catch (err) {
-      console.warn('Using local fallback:', err);
-    } finally {
-      setTimeout(() => {
-        setEngineState('results');
-        setWaveState('results');
-      }, 1200);
+CRITICAL INSTRUCTIONS:
+- For multi-step rules, slow/hard complaints, or reverting to manual clicks -> CLASSIFY STRICTLY AS 'PROFICIENT'.
+- strategicPrescription: Exactly 2 clear, actionable sentences directing the product team on what UX changes to make. Never repeat the prompt.
+`;
+        const responseSchema: Schema = {
+          type: Type.OBJECT,
+          properties: {
+            stage: { type: Type.STRING, enum: ['AWARE', 'DESIRE', 'OPEN', 'PROFICIENT', 'TRANSFORM'] },
+            stageLabel: { type: Type.STRING },
+            confidence: { type: Type.INTEGER },
+            behavioralPattern: { type: Type.STRING },
+            psychologicalDriver: { type: Type.STRING },
+            strategicPrescription: { type: Type.STRING },
+            diagnosis: { type: Type.STRING },
+            takeaway: { type: Type.STRING },
+            signals: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  label: { type: Type.STRING },
+                  detail: { type: Type.STRING },
+                  tone: { type: Type.STRING, enum: ['coral', 'blue', 'lavender'] },
+                },
+                required: ['label', 'detail', 'tone'],
+              },
+            },
+            interventions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  impact: { type: Type.STRING, enum: ['High', 'Medium'] },
+                  effort: { type: Type.STRING, enum: ['Low', 'Medium'] },
+                  priority: { type: Type.STRING, enum: ['P0', 'P1'] },
+                },
+                required: ['title', 'description', 'impact', 'effort', 'priority'],
+              },
+            },
+          },
+          required: [
+            'stage',
+            'stageLabel',
+            'confidence',
+            'behavioralPattern',
+            'psychologicalDriver',
+            'strategicPrescription',
+            'diagnosis',
+            'takeaway',
+            'signals',
+            'interventions',
+          ],
+        };
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: textToAnalyze,
+          config: {
+            systemInstruction,
+            responseMimeType: 'application/json',
+            responseSchema,
+            temperature: 0.1,
+          },
+        });
+
+        if (response.text) {
+          const parsed = JSON.parse(response.text);
+          setDynamicData((prev) => ({
+            ...prev,
+            [parsed.stage]: parsed,
+          }));
+          setActiveStage(parsed.stage);
+        }
+      } catch (e) {
+        console.warn('AI API fallback used:', e);
+      }
     }
+
+    setTimeout(() => {
+      setEngineState('results');
+      setWaveState('results');
+    }, 1200);
   };
 
   const reset = () => {
@@ -313,13 +406,13 @@ export default function App() {
                   setWaveState('listening');
                 }}
                 onBlur={() => setIsFocused(false)}
-                onKeyDown={(event) => event.key === 'Enter' && startDiagnosis()}
+                onKeyDown={(event) => event.key === 'Enter' && runDiagnosis()}
                 placeholder="Enter user problem, telemetry, user feedback, funnel drop-offs"
                 aria-label="Describe your adoption problem"
               />
               <button
                 className="submit-button"
-                onClick={() => startDiagnosis()}
+                onClick={() => runDiagnosis()}
                 disabled={!input.trim()}
                 aria-label="Run diagnosis"
               >
@@ -341,7 +434,7 @@ export default function App() {
                 className="suggestion-card"
                 onClick={() => {
                   setInput(suggestion.text);
-                  startDiagnosis(suggestion.text);
+                  runDiagnosis(suggestion.text);
                 }}
               >
                 <span className="suggestion-card__index">0{index + 1}</span>
