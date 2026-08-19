@@ -209,10 +209,10 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
       const isGenerating = state === 'analyzing' || state === 'submitting';
       const isTyping = state === 'listening';
       
-      // Scaled up amplitude by another 20% to fill the new taller 360px container
-      let targetAmp = 7; // Idle
-      if (isTyping) targetAmp = 36 + (activity * 22);
-      if (isGenerating) targetAmp = 100;
+      // Scaled up amplitude by a further 20% to fill the new taller 432px container
+      let targetAmp = 8.5; // Idle
+      if (isTyping) targetAmp = 43 + (activity * 26);
+      if (isGenerating) targetAmp = 120;
 
       currentAmp += (targetAmp - currentAmp) * 0.08;
 
@@ -258,7 +258,7 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: '84%', 
-        height: '360px', // Increased height by another 20% (up from 300px)
+        height: '432px', // Increased height by another 20% (up from 360px)
         zIndex: 0,
         pointerEvents: 'none',
         mixBlendMode: 'multiply',
