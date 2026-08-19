@@ -172,7 +172,6 @@ const analysisPhases = [
   'Finalizing strategic counselor playbook',
 ];
 
-// NATIVE CANVAS PXSIRI-WAVE REPLICATION
 function CanvasSiriWave({ state, activity }: { state: WaveState; activity: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -186,7 +185,6 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
     let phase = 0;
     let currentAmp = 10;
 
-    // Handle high DPI displays
     const dpr = window.devicePixelRatio || 1;
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -197,7 +195,6 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
     window.addEventListener('resize', resize);
     resize();
 
-    // iOS 9 Siri Wave configuration mapping
     const waves = [
       { color: 'rgba(239, 68, 68, 0.45)', speed: 0.04, shift: 0 },       // Soft Red
       { color: 'rgba(59, 130, 246, 0.45)', speed: 0.05, shift: 2.1 },    // Soft Blue
@@ -209,40 +206,30 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
       const h = canvas.getBoundingClientRect().height;
       ctx.clearRect(0, 0, w, h);
 
-      // Smooth amplitude interpolation based on activity state
       const isGenerating = state === 'analyzing' || state === 'submitting';
       const isTyping = state === 'listening';
       
-      let targetAmp = 5; // Idle
-      if (isTyping) targetAmp = 25 + (activity * 15);
-      if (isGenerating) targetAmp = 70;
+      // Increased Base Amplitude by 20% to match new 300px height
+      let targetAmp = 6; // Idle
+      if (isTyping) targetAmp = 30 + (activity * 18);
+      if (isGenerating) targetAmp = 84;
 
-      // Smoothly animate towards target amplitude
       currentAmp += (targetAmp - currentAmp) * 0.08;
 
       waves.forEach((wave) => {
         ctx.beginPath();
         
-        // Draw the top half of the symmetrical wave
         for (let i = 0; i <= w; i += 3) {
-          // Normalize x from -2 to 2 for the bell curve logic
           const x = (i / w) * 4 - 2;
-          
-          // Attenuation (Bell curve: e^(-x^2))
           const attenuation = Math.exp(-Math.pow(x, 2));
-          
-          // Core sine wave function
           const y = Math.sin(x * 3 + phase * wave.speed + wave.shift) * currentAmp * attenuation;
-          
           ctx.lineTo(i, h / 2 + y);
         }
 
-        // Draw the bottom half backwards to create a closed symmetrical pod
         for (let i = w; i >= 0; i -= 3) {
           const x = (i / w) * 4 - 2;
           const attenuation = Math.exp(-Math.pow(x, 2));
           const y = Math.sin(x * 3 + phase * wave.speed + wave.shift) * currentAmp * attenuation;
-          
           ctx.lineTo(i, h / 2 - y);
         }
 
@@ -270,11 +257,10 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: '140%', 
-        height: '250px',
+        width: '84%', // Reduced width by 40% (down from 140%)
+        height: '300px', // Increased height by 20% (up from 250px)
         zIndex: 0,
         pointerEvents: 'none',
-        // Blend mode multiplies the colors together creating the rich Siri aesthetic
         mixBlendMode: 'multiply',
         opacity: state === 'idle' ? 0.4 : 1,
         transition: 'opacity 0.5s ease'
