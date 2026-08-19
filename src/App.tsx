@@ -47,28 +47,28 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
     interventions: [
       {
         title: 'In-Product Banners',
-        description: 'Non-intrusive banners placed directly within relevant applications and active workflows.',
+        description: 'Non-intrusive banners within relevant applications.',
         impact: 'High',
         effort: 'Low',
         priority: 'P0',
       },
       {
         title: 'Email Marketing',
-        description: 'Segmented campaigns with personalized subject lines, highlighting immediate benefits and new features.',
+        description: 'Segmented campaigns with personalized subject lines, highlighting benefits and new features.',
         impact: 'High',
         effort: 'Medium',
         priority: 'P0',
       },
       {
         title: 'Leadership Communications',
-        description: 'Top-down announcements and endorsements from organizational leaders to establish priority.',
+        description: 'Top-down announcements from organizational leaders.',
         impact: 'High',
         effort: 'Low',
         priority: 'P0',
       },
       {
         title: 'Micro-Content / Short-Form Video',
-        description: '15–30 second visual clips demonstrating quick wins on internal platforms and community channels.',
+        description: '15-30 second clips demonstrating quick wins on internal platforms.',
         impact: 'Medium',
         effort: 'Low',
         priority: 'P1',
@@ -78,76 +78,239 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
   },
   DESIRE: {
     stageLabel: 'Motivation breakdown',
-    confidence: 82,
+    confidence: 85,
     behavioralPattern: 'Value ambiguity',
     psychologicalDriver: 'Unclear reward',
     diagnosis: 'Users understand that the capability exists, but the path from trying it to a meaningful outcome is not compelling enough to create intent.',
     signals: [
-      { label: 'High awareness, low intent', detail: 'Recognition does not translate into trial.', tone: 'coral' },
-      { label: 'Value language is abstract', detail: 'Users cannot predict a concrete outcome.', tone: 'blue' },
-      { label: 'Drop-off before trial', detail: 'Interest fades before first action.', tone: 'lavender' },
+      { label: 'High awareness, low intent', detail: 'Recognition does not translate into active trial.', tone: 'coral' },
+      { label: 'Abstract value perception', detail: 'Users cannot anticipate a concrete workflow win.', tone: 'blue' },
+      { label: 'Pre-trial drop-off', detail: 'Evaluation intent fades before the first action.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Outcome-first framing', description: 'Lead with a concrete, recognizable result instead of describing the capability itself.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Proof in the moment', description: 'Show a small, credible example of the value users can unlock in one session.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Role-based success paths', description: 'Tailor the opening promise to the user’s job, intent, and immediate context.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      {
+        title: 'Landing Page',
+        description: 'Dedicated page that clearly explains community benefits, member stories, and use cases to spark interest and exploration.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Take a Tour Sliders',
+        description: 'Guided walkthroughs that highlight a unique benefit tailored to the user’s role.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Benefit-Oriented Messaging',
+        description: 'Action-driven messages that focus on how the product helps users complete tasks, not just what it does.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'User Testimonials & Case Studies',
+        description: 'Short, relatable stories from early users showing real impact on their work.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
+      {
+        title: 'Interactive Demos & Simulations',
+        description: 'Hands-on, low-risk experiences that let users explore key features while solving a specific problem.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
     ],
-    takeaway: "Adoption isn't failing because users are unaware. They're failing to see a valuable enough reason to begin.",
+    takeaway: 'Focus on benefits, not just features. Show, don’t just tell. Appeal to their immediate needs and aspirations.',
   },
   OPEN: {
     stageLabel: 'Activation breakdown',
-    confidence: 87,
+    confidence: 89,
     behavioralPattern: 'Blank-canvas paralysis',
     psychologicalDriver: 'Cognitive overload',
     diagnosis: 'Users successfully discover the core value proposition, but activation breaks before the first meaningful engagement.',
     signals: [
       { label: '42% activation rate drop-off', detail: 'Measured between generic landing and first input engagement.', tone: 'coral' },
-      { label: 'Time-to-first-value > 45s', detail: 'Exceeds the expected threshold by 30s.', tone: 'blue' },
-      { label: 'Erratic cursor movement', detail: 'Detected hovering over empty canvas.', tone: 'lavender' },
+      { label: 'Time-to-first-value > 45s', detail: 'Exceeds the expected setup threshold by 30s.', tone: 'blue' },
+      { label: 'Erratic cursor movement', detail: 'Detected hovering over empty canvas areas.', tone: 'lavender' },
       { label: 'High perceived effort', detail: 'Users report uncertainty about where to begin.', tone: 'blue' },
     ],
     interventions: [
-      { title: 'Prompt-First First Run', description: 'Bypass the empty canvas. Pre-fill the input area with contextual, single-click prompt suggestions based on user intent.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Seeded Community Templates', description: 'Give users ready-to-use structures so the first experience starts with momentum rather than uncertainty.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Contextual Creation Cards', description: 'Turn uncertainty into an obvious first action using contextual prompts and a visible expected outcome.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      {
+        title: 'FRE & Guided Tours',
+        description: 'Step-by-step guides that break down complex tasks and show users how to navigate key features.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
+      {
+        title: 'Quick Start Guides / Cheat Sheets',
+        description: 'Printable, easy-to-follow instructions for common tasks.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
+      {
+        title: 'AI-Powered Onboarding Bots',
+        description: 'Smart chatbots that answer setup questions and guide users in real time.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
+      {
+        title: 'Single Sign-On (SSO) & Pre-configuration',
+        description: 'Fast setup with pre-filled user data and one-click login.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'In-Product Help & Tooltips',
+        description: 'On-screen tips that explain features right when users need them.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Contextual Help',
+        description: 'Support tailored to the user’s current screen or task.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
     ],
-    takeaway: "Adoption isn't failing because users don't have access. They're failing at the moment of activation.",
+    takeaway: 'Simplicity, clarity, and immediate gratification. Reduce cognitive load and provide clear pathways.',
   },
   PROFICIENT: {
     stageLabel: 'Mastery breakdown',
-    confidence: 74,
+    confidence: 84,
     behavioralPattern: 'Habit interruption',
     psychologicalDriver: 'Low reinforcement',
     diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
     signals: [
       { label: 'Strong first session', detail: 'Initial value is visible and measurable.', tone: 'coral' },
-      { label: 'Week-two retention drops', detail: 'Repeat behavior is not forming.', tone: 'blue' },
-      { label: 'Workflow fragmentation', detail: 'Users leave the product to finish the job.', tone: 'lavender' },
+      { label: 'Week-two retention drops', detail: 'Repeat behavior is not forming after day 7.', tone: 'blue' },
+      { label: 'Workflow fragmentation', detail: 'Users leave the product to complete manual routines.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Habit loops in context', description: 'Make the next repeat action visible immediately after a successful first outcome.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Personal workflow memory', description: 'Remember successful patterns and make them easy to reuse across future sessions.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Progressive skill paths', description: 'Introduce one next-level behavior at the moment confidence is highest.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      {
+        title: 'Automated Task Support',
+        description: 'Copilot helps users complete repetitive or complex tasks by suggesting shortcuts, templates, or automation flows based on usage patterns.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
+      {
+        title: 'Advanced Tutorials',
+        description: 'In-depth sessions covering advanced features, tips, and best practices.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
+      {
+        title: 'User Forums / Communities',
+        description: 'Spaces for peer learning and Q&A (e.g., “Copilot Adoption Community” on Viva Engage).',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Knowledge Base / FAQs',
+        description: 'Searchable self-help articles for quick answers and learning.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
+      {
+        title: 'In-App Surveys / Feedback Prompts',
+        description: 'Quick ways to gather user feedback and identify improvement areas.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
+      {
+        title: 'Usage Analytics',
+        description: 'Track user behavior to spot challenges and improve the experience.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
+      {
+        title: 'Personalized Learning Paths',
+        description: 'Suggested content based on user role or activity.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
     ],
-    takeaway: "Adoption isn't failing at first value. It is failing to turn that value into a reliable habit.",
+    takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
   },
   TRANSFORM: {
     stageLabel: 'Advocacy breakdown',
-    confidence: 68,
+    confidence: 92,
     behavioralPattern: 'Unshared expertise',
     psychologicalDriver: 'Low social leverage',
     diagnosis: 'Power users have developed productive behaviors, but the product gives them no clear way to scale that expertise across their organization.',
     signals: [
       { label: 'Power users are isolated', detail: 'Successful patterns stay within individual accounts.', tone: 'coral' },
-      { label: 'Few shared workflows', detail: 'Teams cannot see or reuse proven behaviors.', tone: 'blue' },
-      { label: 'Mentorship is manual', detail: 'Advocacy depends on one-to-one explanation.', tone: 'lavender' },
+      { label: 'Few shared workflows', detail: 'Teams cannot see, replicate, or reuse proven patterns.', tone: 'blue' },
+      { label: 'Mentorship is manual', detail: 'Advocacy depends on one-to-one manual explanation.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Shareable workflow kits', description: 'Package successful behaviors into lightweight templates that teams can adopt in one click.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Peer pattern library', description: 'Make the best internal examples visible, searchable, and easy to adapt.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Guided team rituals', description: 'Create a repeatable moment for experienced users to model the next behavior for peers.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      {
+        title: 'Champions Programs',
+        description: 'Empower users to lead, mentor, and advocate for the product.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'User-Led Success Stories',
+        description: 'Encourage users to share real impact through posts or videos.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Idea Submission',
+        description: 'Ways for users to suggest new features or improvements through feedback loop.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
+      {
+        title: 'Community Spotlights',
+        description: 'Highlight top contributors to inspire others.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Community-Driven Content',
+        description: 'Let users share their own tutorials, templates, or tips.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Recognition & Rewards',
+        description: 'Celebrate top contributors and innovators publicly.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Copilot-Generated Impact Reports',
+        description: 'Summarize user contributions and usage highlights.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
     ],
-    takeaway: "Adoption isn't failing among power users. Their expertise is failing to travel across the organization.",
+    takeaway: 'Recognize power users, encourage sharing, and facilitate organic growth. Turn users into evangelists.',
   },
 };
 
@@ -231,7 +394,7 @@ export default function App() {
   const classifyPrompt = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
 
-    // 1. TRANSFORM: Sharing, scale, collaboration, team
+    // 1. TRANSFORM: Sharing, scale, collaboration, team, champions, advocacy
     if (
       q.includes('share') ||
       q.includes('team') ||
@@ -241,6 +404,7 @@ export default function App() {
       q.includes('advoca') ||
       q.includes('spread') ||
       q.includes('organization') ||
+      q.includes('mentor') ||
       q.includes('peer')
     ) {
       return 'TRANSFORM';
@@ -269,7 +433,7 @@ export default function App() {
       return 'PROFICIENT';
     }
 
-    // 3. DESIRE: Value clarity, ROI, motivation, why start
+    // 3. DESIRE: Value clarity, ROI, motivation, why start, benefits, demos, landing
     if (
       q.includes('why') ||
       q.includes('value') ||
@@ -278,12 +442,13 @@ export default function App() {
       q.includes('motivation') ||
       q.includes('worth') ||
       q.includes('intent') ||
+      q.includes('interest') ||
       q.includes('desire')
     ) {
       return 'DESIRE';
     }
 
-    // 4. AWARE: Discovery, awareness, visibility, exposure, under 5%
+    // 4. AWARE: Discovery, awareness, visibility, exposure, under 5%, banners
     if (
       q.includes('find') ||
       q.includes('discover') ||
@@ -300,7 +465,7 @@ export default function App() {
       return 'AWARE';
     }
 
-    // 5. Default: OPEN (Activation, blank canvas, onboarding setup)
+    // 5. Default: OPEN (Activation, setup, blank canvas, onboarding, guided tours)
     return 'OPEN';
   }, []);
 
@@ -562,7 +727,7 @@ export default function App() {
               </article>
 
               <article className="takeaway-card reveal reveal--three">
-                <div className="section-label">Executive takeaway</div>
+                <div className="section-label">Executive takeaway & Key Principles</div>
                 <p>“{diagnosis.takeaway}”</p>
                 <div className="takeaway-grid">
                   <span>
@@ -575,11 +740,11 @@ export default function App() {
                   </span>
                   <span>
                     <small>Recommended move</small>
-                    <strong>Reduce friction</strong>
+                    <strong>Execute Interventions</strong>
                   </span>
                   <span>
                     <small>Expected outcome</small>
-                    <strong>Faster habit formation</strong>
+                    <strong>Accelerated Habituation</strong>
                   </span>
                 </div>
               </article>
@@ -593,23 +758,25 @@ export default function App() {
                     Recommended <strong>interventions</strong>
                   </h3>
                 </div>
-                <span className="intervention-count">0{diagnosis.interventions.length} moves</span>
+                <span className="intervention-count">
+                  {diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves
+                </span>
               </div>
               <p className="intervention-intro reveal reveal--one">
-                High-impact UX changes mapped to the diagnosed behavioral barrier.
+                High-impact UX changes mapped directly to the diagnosed behavioral barrier.
               </p>
               {diagnosis.interventions.map((intervention, index) => (
                 <article className={`intervention-card reveal reveal--${index + 2}`} key={intervention.title}>
                   <div className="intervention-card__top">
                     <span>
-                      0{index + 1} — {intervention.priority}
+                      {index + 1 < 10 ? `0${index + 1}` : index + 1} — {intervention.priority}
                     </span>
                     <span>{intervention.impact} impact</span>
                   </div>
                   <h4>{intervention.title}</h4>
                   <p>
                     {generated === index
-                      ? 'A guided first-run experience with contextual prompts, seeded examples, and a visible next step that reduces uncertainty before the first input.'
+                      ? `Generated concept for ${intervention.title}: Guided interaction model reducing cognitive load with contextual micro-actions.`
                       : intervention.description}
                   </p>
                   <div className="intervention-card__footer">
@@ -634,7 +801,7 @@ export default function App() {
                   </div>
                   {generated === index && (
                     <div className="concept-note">
-                      <Sparkles size={14} /> Interaction model ready · expected activation lift +18%
+                      <Sparkles size={14} /> Interaction model ready · expected stage lift +22%
                     </div>
                   )}
                 </article>
