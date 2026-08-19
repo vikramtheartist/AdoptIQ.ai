@@ -183,10 +183,7 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
 
     let reqId: number;
     let phase = 0;
-    
-    // Dynamic physics state
     let currentAmp = 10;
-    let currentSpeed = 1.0;
 
     const dpr = window.devicePixelRatio || 1;
     const resize = () => {
@@ -198,10 +195,11 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
     window.addEventListener('resize', resize);
     resize();
 
+    // UPDATED COLOR PALETTE: Matching the Lavender, Deep Blue, and Cyan reference
     const waves = [
-      { color: 'rgba(192, 132, 252, 0.55)', speed: 0.04, shift: 0 },       // Lavender
-      { color: 'rgba(37, 99, 235, 0.55)', speed: 0.05, shift: 2.1 },        // Deep Blue
-      { color: 'rgba(56, 189, 248, 0.55)', speed: 0.06, shift: 4.2 },       // Cyan
+      { color: 'rgba(192, 132, 252, 0.55)', speed: 0.04, shift: 0 },       // Lavender / Light Purple
+      { color: 'rgba(37, 99, 235, 0.55)', speed: 0.05, shift: 2.1 },        // Deep Royal Blue
+      { color: 'rgba(56, 189, 248, 0.55)', speed: 0.06, shift: 4.2 },       // Bright Cyan / Light Blue
     ];
 
     const draw = () => {
@@ -212,17 +210,11 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
       const isGenerating = state === 'analyzing' || state === 'submitting';
       const isTyping = state === 'listening';
       
-      // 1. AMPLITUDE LOGIC (Height of the wave)
-      let targetAmp = 12; // Base idle height
-      if (isTyping) targetAmp = 30 + (activity * 15);
+      let targetAmp = 8.5; // Idle
+      if (isTyping) targetAmp = 43 + (activity * 26);
       if (isGenerating) targetAmp = 120;
-      currentAmp += (targetAmp - currentAmp) * 0.08;
 
-      // 2. SPEED LOGIC (Velocity of the wave moving horizontally)
-      let targetSpeed = 1.0; // Idle pace (bubbling gently)
-      if (isTyping) targetSpeed = 0.2; // Slow down drastically when user starts typing
-      if (isGenerating) targetSpeed = 4.0; // Fasten/flicker heavily when generating/loading
-      currentSpeed += (targetSpeed - currentSpeed) * 0.05;
+      currentAmp += (targetAmp - currentAmp) * 0.08;
 
       waves.forEach((wave) => {
         ctx.beginPath();
@@ -246,8 +238,7 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
         ctx.fill();
       });
 
-      // Increment phase by the dynamic speed multiplier
-      phase += currentSpeed;
+      phase += 1;
       reqId = requestAnimationFrame(draw);
     };
 
