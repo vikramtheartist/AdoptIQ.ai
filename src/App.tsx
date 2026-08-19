@@ -623,7 +623,7 @@ CRITICAL RULES:
             </div>
           </div>
 
-          <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ marginBottom: '1.75rem' }}>
             <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
               {stages.map((stage) => (
                 <button
@@ -635,40 +635,40 @@ CRITICAL RULES:
                     setActiveStage(stage.key);
                     setGenerated(null);
                   }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem'
+                  }}
                 >
-                  {stage.label}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', width: '100%', paddingTop: '0.75rem' }}>
-              {stages.map((stage) => (
-                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', minHeight: '28px' }}>
+                  <span>{stage.label}</span>
                   {activeStage === stage.key && (
-                    <div 
+                    <span 
+                      aria-label="Focus stage"
+                      title="Focus stage"
                       style={{
-                        background: '#fef2f2',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: '#fee2e2',
                         color: '#dc2626',
-                        border: '1px solid #fca5a5',
-                        padding: '0.3rem 0.75rem',
-                        borderRadius: '999px',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        display: 'flex',
+                        border: '1.5px solid #f87171',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.4rem',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
-                        animation: 'pillPopDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: 900,
+                        lineHeight: 1,
+                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.22)',
+                        marginLeft: '4px',
+                        flexShrink: 0
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
-                        <span style={{ fontSize: '11px', lineHeight: 1, color: '#dc2626', fontWeight: 'bold' }}>×</span>
-                      </div>
-                      RECOMMENDED FOCUS
-                    </div>
+                      !
+                    </span>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
