@@ -172,44 +172,118 @@ const analysisPhases = [
   'Finalizing strategic counselor playbook',
 ];
 
-function SignalWave({ state, activity }: { state: WaveState; activity: number }) {
-  const paths = useMemo(
-    () => [
-      'M0 90 C105 90 130 90 190 80 C245 70 260 110 325 93 C390 76 410 32 468 72 C525 112 545 121 608 86 C670 50 690 46 748 83 C800 116 825 109 880 80 C935 51 960 68 1015 83 C1070 98 1100 91 1200 90',
-      'M0 90 C120 90 150 92 207 84 C264 76 290 100 350 88 C408 77 437 45 488 75 C537 105 565 127 624 83 C683 39 720 53 765 82 C810 111 845 116 900 83 C955 50 986 66 1033 82 C1080 98 1120 91 1200 90',
-      'M0 90 C110 90 150 89 215 83 C280 77 299 99 357 90 C415 81 445 27 503 69 C560 111 588 128 645 83 C702 38 730 49 778 85 C826 121 852 111 912 79 C972 47 1000 62 1045 81 C1090 100 1135 91 1200 90',
-      'M0 90 C100 90 142 90 208 87 C274 84 302 95 366 90 C430 85 455 53 510 78 C565 103 595 112 650 85 C705 58 742 59 790 84 C838 109 870 105 920 82 C970 59 1008 69 1050 84 C1092 99 1138 91 1200 90',
-    ],
-    []
-  );
+// NATIVE CANVAS PXSIRI-WAVE REPLICATION
+function CanvasSiriWave({ state, activity }: { state: WaveState; activity: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let reqId: number;
+    let phase = 0;
+    let currentAmp = 10;
+
+    // Handle high DPI displays
+    const dpr = window.devicePixelRatio || 1;
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    // iOS 9 Siri Wave configuration mapping
+    const waves = [
+      { color: 'rgba(239, 68, 68, 0.45)', speed: 0.04, shift: 0 },       // Soft Red
+      { color: 'rgba(59, 130, 246, 0.45)', speed: 0.05, shift: 2.1 },    // Soft Blue
+      { color: 'rgba(16, 185, 129, 0.45)', speed: 0.06, shift: 4.2 },    // Soft Green
+    ];
+
+    const draw = () => {
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Smooth amplitude interpolation based on activity state
+      const isGenerating = state === 'analyzing' || state === 'submitting';
+      const isTyping = state === 'listening';
+      
+      let targetAmp = 5; // Idle
+      if (isTyping) targetAmp = 25 + (activity * 15);
+      if (isGenerating) targetAmp = 70;
+
+      // Smoothly animate towards target amplitude
+      currentAmp += (targetAmp - currentAmp) * 0.08;
+
+      waves.forEach((wave) => {
+        ctx.beginPath();
+        
+        // Draw the top half of the symmetrical wave
+        for (let i = 0; i <= w; i += 3) {
+          // Normalize x from -2 to 2 for the bell curve logic
+          const x = (i / w) * 4 - 2;
+          
+          // Attenuation (Bell curve: e^(-x^2))
+          const attenuation = Math.exp(-Math.pow(x, 2));
+          
+          // Core sine wave function
+          const y = Math.sin(x * 3 + phase * wave.speed + wave.shift) * currentAmp * attenuation;
+          
+          ctx.lineTo(i, h / 2 + y);
+        }
+
+        // Draw the bottom half backwards to create a closed symmetrical pod
+        for (let i = w; i >= 0; i -= 3) {
+          const x = (i / w) * 4 - 2;
+          const attenuation = Math.exp(-Math.pow(x, 2));
+          const y = Math.sin(x * 3 + phase * wave.speed + wave.shift) * currentAmp * attenuation;
+          
+          ctx.lineTo(i, h / 2 - y);
+        }
+
+        ctx.closePath();
+        ctx.fillStyle = wave.color;
+        ctx.fill();
+      });
+
+      phase += 1;
+      reqId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(reqId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [state, activity]);
 
   return (
-    <div className={`signal-wave signal-wave--${state}`} style={{ '--wave-activity': activity } as React.CSSProperties} aria-hidden="true">
-      <svg viewBox="0 0 1200 180" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="waveLavender" x1="0" x2="1">
-            <stop stopColor="#d9c8ff" stopOpacity="0" />
-            <stop offset=".22" stopColor="#bfa1ff" stopOpacity=".52" />
-            <stop offset=".54" stopColor="#7c8ff0" stopOpacity=".68" />
-            <stop offset=".82" stopColor="#91d9ff" stopOpacity=".5" />
-            <stop offset="1" stopColor="#a9efff" stopOpacity="0" />
-          </linearGradient>
-          <filter id="softWave"><feGaussianBlur stdDeviation="7" /></filter>
-          <filter id="softWaveSmall"><feGaussianBlur stdDeviation="2.5" /></filter>
-        </defs>
-        {paths.map((path, index) => (
-          <path
-            key={path}
-            className={`wave-line wave-line--${index + 1}`}
-            d={path}
-            fill="none"
-            stroke="url(#waveLavender)"
-            strokeWidth={index === 0 ? 20 : index === 1 ? 13 : index === 2 ? 8 : 4}
-            filter={`url(#${index < 2 ? 'softWave' : 'softWaveSmall'})`}
-          />
-        ))}
-        <path className="wave-core" d={paths[2]} fill="none" stroke="url(#waveLavender)" strokeWidth="2" />
-      </svg>
+    <div 
+      style={{ 
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '140%', 
+        height: '250px',
+        zIndex: 0,
+        pointerEvents: 'none',
+        // Blend mode multiplies the colors together creating the rich Siri aesthetic
+        mixBlendMode: 'multiply',
+        opacity: state === 'idle' ? 0.4 : 1,
+        transition: 'opacity 0.5s ease'
+      }}
+    >
+      <canvas 
+        ref={canvasRef} 
+        style={{ width: '100%', height: '100%' }} 
+      />
     </div>
   );
 }
@@ -407,9 +481,10 @@ CRITICAL RULES:
             <p className="hero-subtitle">Give the engine messy signals. Get the behavioral reason — and the tailored next move.</p>
           </div>
 
-          <div className="input-stage">
-            <SignalWave state={waveState} activity={activity} />
-            <div className={`command-bar ${isFocused ? 'command-bar--focused' : ''}`}>
+          <div className="input-stage" style={{ position: 'relative' }}>
+            <CanvasSiriWave state={waveState} activity={activity} />
+            
+            <div className={`command-bar ${isFocused ? 'command-bar--focused' : ''}`} style={{ position: 'relative', zIndex: 10 }}>
               <CirclePlus size={22} strokeWidth={1.7} className="command-bar__plus" />
               <input
                 ref={inputRef}
@@ -470,13 +545,13 @@ CRITICAL RULES:
       {engineState === 'analyzing' && (
         <section className="analysis-view" aria-live="polite">
           <div className="analysis-orbit"><span /><span /><span /></div>
-          <SignalWave state={waveState} activity={1.35} />
-          <div className="analysis-status">
+          <CanvasSiriWave state={waveState} activity={1.35} />
+          <div className="analysis-status" style={{ position: 'relative', zIndex: 10 }}>
             <span className="analysis-status__pulse" />
             <span>{analysisPhases[phaseIndex]}</span>
           </div>
-          <p className="analysis-caption">The AI engine is synthesizing your signal into concrete ADOPT initiatives.</p>
-          <div className="analysis-progress">
+          <p className="analysis-caption" style={{ position: 'relative', zIndex: 10 }}>The AI engine is synthesizing your signal into concrete ADOPT initiatives.</p>
+          <div className="analysis-progress" style={{ position: 'relative', zIndex: 10 }}>
             <span style={{ width: `${(phaseIndex + 1) * 20}%` }} />
           </div>
         </section>
@@ -494,8 +569,6 @@ CRITICAL RULES:
             </button>
           </div>
 
-          {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY */}
-          {/* Note: marginBottom set to 1rem to tightly couple with the tabs below */}
           <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
             <div className="siri-mesh-bg" />
             
@@ -516,9 +589,7 @@ CRITICAL RULES:
             </div>
           </div>
 
-          {/* STAGE NAVIGATION WITH PILL BELOW */}
           <div style={{ marginBottom: '2.5rem' }}>
-            {/* ROW 1: TABS */}
             <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
               {stages.map((stage) => (
                 <button
@@ -536,7 +607,6 @@ CRITICAL RULES:
               ))}
             </div>
 
-            {/* ROW 2: RED PILL (Physically placed BELOW the tabs) */}
             <div style={{ display: 'flex', width: '100%', paddingTop: '0.75rem' }}>
               {stages.map((stage) => (
                 <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', minHeight: '28px' }}>
@@ -652,7 +722,6 @@ CRITICAL RULES:
                 <span className="intervention-count">{diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves</span>
               </div>
               
-              {/* MERGED PRESCRIPTION BLOCK */}
               <div className="intervention-intro reveal reveal--one" style={{ padding: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', borderLeft: '4px solid #6366f1', borderRadius: '0 0.5rem 0.5rem 0', marginBottom: '1.5rem' }}>
                 <p style={{ margin: 0, color: '#1e293b', fontSize: '0.94rem', lineHeight: 1.6 }}>
                   <strong style={{ color: '#4f46e5' }}>High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).</strong> {diagnosis.stageFocusPrescription}
@@ -694,7 +763,6 @@ CRITICAL RULES:
         <span>© 2026</span>
       </footer>
 
-      {/* Invisible Style Block Moved to the Bottom to Prevent Layout Shifts */}
       <div style={{ display: 'none' }}>
         <style>
           {`
