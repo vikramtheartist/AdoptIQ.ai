@@ -1,107 +1,207 @@
 export type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
 
-export type Intervention = {
+export interface Intervention {
   title: string;
   description: string;
-  impact: 'High' | 'Medium';
-  effort: 'Low' | 'Medium';
-  priority: 'P0' | 'P1';
-};
+  impact: 'High Impact' | 'Medium Impact';
+  type: string;
+}
 
-export type Diagnosis = {
-  stageLabel: string;
+export interface DiagnosisResult {
+  stage: AdoptStage;
+  title: string;
   confidence: number;
-  behavioralPattern: string;
-  psychologicalDriver: string;
-  diagnosis: string;
-  signals: { label: string; detail: string; tone: 'coral' | 'blue' | 'lavender' }[];
+  description: string;
   interventions: Intervention[];
-  takeaway: string;
-};
+}
 
-export const stages: { key: AdoptStage; label: string }[] = [
-  { key: 'AWARE', label: 'Aware' },
-  { key: 'DESIRE', label: 'Desire' },
-  { key: 'OPEN', label: 'Open' },
-  { key: 'PROFICIENT', label: 'Proficient' },
-  { key: 'TRANSFORM', label: 'Transform' },
-];
-
-export const diagnoses: Record<AdoptStage, Diagnosis> = {
+export const DIAGNOSTIC_KNOWLEDGE_BASE: Record<AdoptStage, DiagnosisResult> = {
   AWARE: {
-    stageLabel: 'Discovery breakdown', confidence: 79, behavioralPattern: 'Invisible value', psychologicalDriver: 'Attentional blindness',
-    diagnosis: 'Users are not encountering the capability at the moment they have a relevant need, so its value never enters their consideration set.',
-    signals: [
-      { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent sessions.', tone: 'coral' },
-      { label: 'Low navigation reach', detail: 'Users rarely enter the feature surface.', tone: 'blue' },
-      { label: 'Search intent is unserved', detail: 'Relevant queries end without a next action.', tone: 'lavender' },
-    ],
+    stage: 'AWARE',
+    title: 'Discovery breakdown',
+    confidence: 94,
+    description: 'Users are unaware the capability exists because it is isolated outside their active daily workflow.',
     interventions: [
-      { title: 'Contextual discovery cues', description: 'Place a clear, benefit-led invitation at the moment an existing workflow makes the new capability relevant.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Intent-based entry points', description: 'Connect high-intent search and navigation moments to a focused first action.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Outcome-led education', description: 'Replace feature language with a short story of what users can accomplish next.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: "Adoption isn't failing because the capability lacks value. Users are failing to encounter it when the need is present.",
+      {
+        title: 'In-Workflow Pulse Beacons',
+        description: 'Contextual micro-anchors alerting users to features when relevant context occurs.',
+        impact: 'High Impact',
+        type: 'Discovery Hook'
+      },
+      {
+        title: 'Smart Empty-State Cards',
+        description: 'Transform passive dead-ends into high-intent discovery entry points.',
+        impact: 'High Impact',
+        type: 'Surface Area'
+      },
+      {
+        title: 'Event-Triggered Spotlight',
+        description: 'Highlight shortcut availability immediately following manual multi-step actions.',
+        impact: 'Medium Impact',
+        type: 'Nudge'
+      }
+    ]
   },
   DESIRE: {
-    stageLabel: 'Motivation breakdown', confidence: 82, behavioralPattern: 'Value ambiguity', psychologicalDriver: 'Unclear reward',
-    diagnosis: 'Users understand that the capability exists, but the path from trying it to a meaningful outcome is not compelling enough to create intent.',
-    signals: [
-      { label: 'High awareness, low intent', detail: 'Recognition does not translate into trial.', tone: 'coral' },
-      { label: 'Value language is abstract', detail: 'Users cannot predict a concrete outcome.', tone: 'blue' },
-      { label: 'Drop-off before trial', detail: 'Interest fades before first action.', tone: 'lavender' },
-    ],
+    stage: 'DESIRE',
+    title: 'Motivation breakdown',
+    confidence: 91,
+    description: 'Users understand the feature exists but lack compelling proof of immediate ROI or value outcome.',
     interventions: [
-      { title: 'Outcome-first framing', description: 'Lead with a concrete, recognizable result instead of describing the capability itself.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Proof in the moment', description: 'Show a small, credible example of the value users can unlock in one session.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Role-based success paths', description: 'Tailor the opening promise to the user’s job, intent, and immediate context.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: "Adoption isn't failing because users are unaware. They're failing to see a valuable enough reason to begin.",
+      {
+        title: 'Outcome-First Preview Cards',
+        description: 'Display before-and-after dynamic previews before requiring user commitment.',
+        impact: 'High Impact',
+        type: 'Value Signal'
+      },
+      {
+        title: 'Peer Benchmark Metrics',
+        description: 'Surface aggregated team efficiency gains directly inside the empty state.',
+        impact: 'High Impact',
+        type: 'Social Proof'
+      },
+      {
+        title: 'Interactive ROI Estimator',
+        description: 'Quantify minutes saved per workflow dynamically based on user role.',
+        impact: 'Medium Impact',
+        type: 'Motivation'
+      }
+    ]
   },
   OPEN: {
-    stageLabel: 'Activation breakdown', confidence: 87, behavioralPattern: 'Blank-canvas paralysis', psychologicalDriver: 'Cognitive overload',
-    diagnosis: 'Users successfully discover the core value proposition, but activation breaks before the first meaningful engagement.',
-    signals: [
-      { label: '42% activation rate drop-off', detail: 'Measured between generic landing and first input engagement.', tone: 'coral' },
-      { label: 'Time-to-first-value > 45s', detail: 'Exceeds the expected threshold by 30s.', tone: 'blue' },
-      { label: 'Erratic cursor movement', detail: 'Detected hovering over empty canvas.', tone: 'lavender' },
-      { label: 'High perceived effort', detail: 'Users report uncertainty about where to begin.', tone: 'blue' },
-    ],
+    stage: 'OPEN',
+    title: 'Activation breakdown',
+    confidence: 93,
+    description: 'Users reach the entry point but abandon setup due to blank-canvas paralysis or initial cognitive friction.',
     interventions: [
-      { title: 'Prompt-First First Run', description: 'Bypass the empty canvas. Pre-fill the input area with contextual, single-click prompt suggestions based on user intent.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Seeded Community Templates', description: 'Give users ready-to-use structures so the first experience starts with momentum rather than uncertainty.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Contextual Creation Cards', description: 'Turn uncertainty into an obvious first action using contextual prompts and a visible expected outcome.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: "Adoption isn't failing because users don't have access. They're failing at the moment of activation.",
+      {
+        title: 'Pre-Populated Starter Canvas',
+        description: 'Provide 3 ready-to-run templates directly in the opening canvas to eliminate zero-state dread.',
+        impact: 'High Impact',
+        type: 'Scaffolding'
+      },
+      {
+        title: 'Progressive Micro-Checklist',
+        description: 'Break setup into two lightweight micro-actions with clear milestone celebration.',
+        impact: 'High Impact',
+        type: 'Onboarding'
+      },
+      {
+        title: 'Inline Synthetic Mock Data',
+        description: 'Auto-fill test telemetry so users can experience output before connecting real data.',
+        impact: 'Medium Impact',
+        type: 'Activation'
+      }
+    ]
   },
   PROFICIENT: {
-    stageLabel: 'Mastery breakdown', confidence: 74, behavioralPattern: 'Habit interruption', psychologicalDriver: 'Low reinforcement',
-    diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
-    signals: [
-      { label: 'Strong first session', detail: 'Initial value is visible and measurable.', tone: 'coral' },
-      { label: 'Week-two retention drops', detail: 'Repeat behavior is not forming.', tone: 'blue' },
-      { label: 'Workflow fragmentation', detail: 'Users leave the product to finish the job.', tone: 'lavender' },
-    ],
+    stage: 'PROFICIENT',
+    title: 'Mastery breakdown',
+    confidence: 89,
+    description: 'Users encounter a productivity dip after initial use, preventing habit formation and repeat workflows.',
     interventions: [
-      { title: 'Habit loops in context', description: 'Make the next repeat action visible immediately after a successful first outcome.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Personal workflow memory', description: 'Remember successful patterns and make them easy to reuse across future sessions.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Progressive skill paths', description: 'Introduce one next-level behavior at the moment confidence is highest.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: "Adoption isn't failing at first value. It is failing to turn that value into a reliable habit.",
+      {
+        title: 'Contextual Shortcut Palette',
+        description: 'Dynamic overlay teaching command keystrokes contextually during repetitive tasks.',
+        impact: 'High Impact',
+        type: 'Efficiency'
+      },
+      {
+        title: 'Prompt of the Week Cards',
+        description: 'Bite-sized mastery challenges embedded in the workspace toolbar.',
+        impact: 'High Impact',
+        type: 'Skill Acceleration'
+      },
+      {
+        title: 'Smart Auto-Completion Engine',
+        description: 'Suggest syntax completions inline as users formulate complex queries.',
+        impact: 'Medium Impact',
+        type: 'Assistance'
+      }
+    ]
   },
   TRANSFORM: {
-    stageLabel: 'Advocacy breakdown', confidence: 68, behavioralPattern: 'Unshared expertise', psychologicalDriver: 'Low social leverage',
-    diagnosis: 'Power users have developed productive behaviors, but the product gives them no clear way to scale that expertise across their organization.',
-    signals: [
-      { label: 'Power users are isolated', detail: 'Successful patterns stay within individual accounts.', tone: 'coral' },
-      { label: 'Few shared workflows', detail: 'Teams cannot see or reuse proven behaviors.', tone: 'blue' },
-      { label: 'Mentorship is manual', detail: 'Advocacy depends on one-to-one explanation.', tone: 'lavender' },
-    ],
+    stage: 'TRANSFORM',
+    title: 'Advocacy breakdown',
+    confidence: 96,
+    description: 'Power users lack native mechanisms to share templates, mentor teammates, or scale organizational impact.',
     interventions: [
-      { title: 'Shareable workflow kits', description: 'Package successful behaviors into lightweight templates that teams can adopt in one click.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Peer pattern library', description: 'Make the best internal examples visible, searchable, and easy to adapt.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Guided team rituals', description: 'Create a repeatable moment for experienced users to model the next behavior for peers.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: "Adoption isn't failing among power users. Their expertise is failing to travel across the organization.",
-  },
+      {
+        title: '1-Click Team Recipe Publisher',
+        description: 'Let champions publish sanitized workflow blueprints to the workspace gallery.',
+        impact: 'High Impact',
+        type: 'Viral Loop'
+      },
+      {
+        title: 'Workspace Champion Leaderboard',
+        description: 'Recognize top internal creators and surface their vetted workflows.',
+        impact: 'High Impact',
+        type: 'Incentive'
+      },
+      {
+        title: 'Shared Team Prompt Library',
+        description: 'Centralized collaborative repository for departmental prompt standards.',
+        impact: 'Medium Impact',
+        type: 'Collaboration'
+      }
+    ]
+  }
+};
+
+export const diagnosePrompt = (input: string): DiagnosisResult => {
+  const q = input.toLowerCase();
+
+  // PROFICIENT: Mastery & efficiency drop-offs
+  if (
+    q.includes('shortcut') ||
+    q.includes('master') ||
+    q.includes('syntax') ||
+    q.includes('day 7') ||
+    q.includes('habit') ||
+    q.includes('complex') ||
+    q.includes('slow') ||
+    q.includes('hard')
+  ) {
+    return DIAGNOSTIC_KNOWLEDGE_BASE.PROFICIENT;
+  }
+
+  // TRANSFORM: Sharing, scale & advocacy
+  if (
+    q.includes('share') ||
+    q.includes('team') ||
+    q.includes('champion') ||
+    q.includes('scale') ||
+    q.includes('invite') ||
+    q.includes('collaborate')
+  ) {
+    return DIAGNOSTIC_KNOWLEDGE_BASE.TRANSFORM;
+  }
+
+  // DESIRE: Motivation, ROI & value perception
+  if (
+    q.includes('why') ||
+    q.includes('value') ||
+    q.includes('benefit') ||
+    q.includes('roi') ||
+    q.includes('worth') ||
+    q.includes('point')
+  ) {
+    return DIAGNOSTIC_KNOWLEDGE_BASE.DESIRE;
+  }
+
+  // AWARE: Discovery, awareness & surface area
+  if (
+    q.includes('find') ||
+    q.includes('discover') ||
+    q.includes('where') ||
+    q.includes('5%') ||
+    q.includes('under 5%') ||
+    q.includes('aware') ||
+    q.includes('see')
+  ) {
+    return DIAGNOSTIC_KNOWLEDGE_BASE.AWARE;
+  }
+
+  // OPEN: Activation, onboarding & setup
+  return DIAGNOSTIC_KNOWLEDGE_BASE.OPEN;
 };
