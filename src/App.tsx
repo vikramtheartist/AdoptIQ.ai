@@ -207,16 +207,14 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
-  // Immediate deterministic heuristic classification
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
-    if (q.includes('share') || q.includes('team') || q.includes('scale') || q.includes('collaborat') || q.includes('champion') || q.includes('advoca')) {
-      return 'TRANSFORM';
-    }
+
+    // 1. PROFICIENT: Specific operational friction & repeat habit drop-offs take top priority
     if (
       q.includes('shortcut') ||
       q.includes('syntax') ||
-      q.includes('rules') ||
+      q.includes('rule') ||
       q.includes('slow') ||
       q.includes('hard') ||
       q.includes('complex') ||
@@ -224,18 +222,56 @@ export default function App() {
       q.includes('manual') ||
       q.includes('revert') ||
       q.includes('retention') ||
-      q.includes('automated task') ||
-      q.includes('support') ||
+      q.includes('once') ||
+      q.includes('repeat') ||
+      q.includes('task support') ||
       q.includes('proficient')
     ) {
       return 'PROFICIENT';
     }
-    if (q.includes('why') || q.includes('roi') || q.includes('value') || q.includes('benefit') || q.includes('landing') || q.includes('trial') || q.includes('desire')) {
+
+    // 2. TRANSFORM: Scaling, advocacy, templates across teams, champions
+    if (
+      q.includes('share') ||
+      q.includes('scale') ||
+      q.includes('collaborat') ||
+      q.includes('champion') ||
+      q.includes('advoca') ||
+      q.includes('mentor') ||
+      q.includes('transform') ||
+      q.includes('team')
+    ) {
+      return 'TRANSFORM';
+    }
+
+    // 3. DESIRE: Value clarity, ROI, motivation, trial conversion
+    if (
+      q.includes('why') ||
+      q.includes('roi') ||
+      q.includes('value') ||
+      q.includes('benefit') ||
+      q.includes('landing') ||
+      q.includes('trial') ||
+      q.includes('convert') ||
+      q.includes('desire')
+    ) {
       return 'DESIRE';
     }
-    if (q.includes('discover') || q.includes('aware') || q.includes('5%') || q.includes('find') || q.includes('visibility') || q.includes('banner')) {
+
+    // 4. AWARE: Discovery, awareness, visibility, banners
+    if (
+      q.includes('discover') ||
+      q.includes('aware') ||
+      q.includes('5%') ||
+      q.includes('find') ||
+      q.includes('visibility') ||
+      q.includes('banner') ||
+      q.includes('exposure')
+    ) {
       return 'AWARE';
     }
+
+    // 5. Default: OPEN
     return 'OPEN';
   }, []);
 
