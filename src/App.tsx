@@ -232,73 +232,37 @@ export default function App() {
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
 
-    // 1. PROFICIENT: Skills gap, literacy, prompting confidence, habits, daily workflows, rules, shortcuts, revert to manual
+    // 1. PROFICIENT
     if (
-      q.includes('skill') ||
-      q.includes('literacy') ||
-      q.includes('prompt') ||
-      q.includes('confidence') ||
-      q.includes('output') ||
-      q.includes('daily workflow') ||
-      q.includes('scale it into daily') ||
-      q.includes('experimenting') ||
-      q.includes('shortcut') ||
-      q.includes('syntax') ||
-      q.includes('rule') ||
-      q.includes('slow') ||
-      q.includes('hard') ||
-      q.includes('complex') ||
-      q.includes('habit') ||
-      q.includes('manual') ||
-      q.includes('revert') ||
-      q.includes('retention') ||
+      q.includes('skill') || q.includes('literacy') || q.includes('prompt') ||
+      q.includes('confidence') || q.includes('output') || q.includes('daily workflow') ||
+      q.includes('scale it into daily') || q.includes('experimenting') || q.includes('shortcut') ||
+      q.includes('syntax') || q.includes('rule') || q.includes('slow') ||
+      q.includes('hard') || q.includes('complex') || q.includes('habit') ||
+      q.includes('manual') || q.includes('revert') || q.includes('retention') ||
       q.includes('proficient')
-    ) {
-      return 'PROFICIENT';
-    }
+    ) return 'PROFICIENT';
 
-    // 2. TRANSFORM: Scaling expertise, champion advocacy, community templates
+    // 2. TRANSFORM
     if (
-      q.includes('champion') ||
-      q.includes('advoca') ||
-      q.includes('mentor') ||
-      q.includes('pillar') ||
-      q.includes('transform') ||
-      q.includes('spotlight') ||
-      (q.includes('share') && q.includes('team')) ||
-      q.includes('scale across')
-    ) {
-      return 'TRANSFORM';
-    }
+      q.includes('champion') || q.includes('advoca') || q.includes('mentor') ||
+      q.includes('pillar') || q.includes('transform') || q.includes('spotlight') ||
+      (q.includes('share') && q.includes('team')) || q.includes('scale across')
+    ) return 'TRANSFORM';
 
-    // 3. DESIRE: Value clarity, ROI, motivation, trial exploration
+    // 3. DESIRE
     if (
-      q.includes('why') ||
-      q.includes('roi') ||
-      q.includes('value') ||
-      q.includes('benefit') ||
-      q.includes('landing') ||
-      q.includes('trial') ||
-      q.includes('convert') ||
-      q.includes('ignite') ||
-      q.includes('desire')
-    ) {
-      return 'DESIRE';
-    }
+      q.includes('why') || q.includes('roi') || q.includes('value') ||
+      q.includes('benefit') || q.includes('landing') || q.includes('trial') ||
+      q.includes('convert') || q.includes('ignite') || q.includes('desire')
+    ) return 'DESIRE';
 
-    // 4. AWARE: Discovery, awareness, visibility, banners
+    // 4. AWARE
     if (
-      q.includes('discover') ||
-      q.includes('aware') ||
-      q.includes('5%') ||
-      q.includes('find') ||
-      q.includes('visibility') ||
-      q.includes('banner') ||
-      q.includes('exposure') ||
-      q.includes('know about')
-    ) {
-      return 'AWARE';
-    }
+      q.includes('discover') || q.includes('aware') || q.includes('5%') ||
+      q.includes('find') || q.includes('visibility') || q.includes('banner') ||
+      q.includes('exposure') || q.includes('know about')
+    ) return 'AWARE';
 
     return 'OPEN';
   }, []);
@@ -328,7 +292,6 @@ export default function App() {
       try {
         const ai = new GoogleGenAI({ apiKey });
         
-        // System Instruction acting as the Behavioral Counselor mapping to ADOPT theory
         const systemInstruction = `
 You are the ADOPT Senior Behavioral Intelligence Counselor.
 Your role is to diagnose user adoption roadmaps and synthesize them into the ADOPT behavioral framework. 
@@ -343,7 +306,7 @@ Map the input to the exact 5 ADOPT stages:
 
 CRITICAL RULES:
 - If the input involves "skills gap", "prompting literacy", "scaling into daily workflows", or "reverting to manual clicks", you MUST classify as "PROFICIENT". Do NOT classify as TRANSFORM unless the core problem is power users lacking sharing mechanisms.
-- aiSummary MUST be 2-3 sentences. It must diagnose the root behavioral roadblock (e.g., status quo bias, cognitive overload) and state the immediate strategic direction using ADOPT principles.
+- aiSummary MUST be 2-3 sentences. It must diagnose the root behavioral roadblock (e.g., status quo bias, cognitive overload).
 - stageFocusPrescription MUST be 1-2 sentences starting with "Focus on the [Stage] stage by..." and detail the exact UX shifts aligned to that stage.
 - interventions MUST exclusively use the tactics defined in the stage descriptions above.
 `;
@@ -389,19 +352,8 @@ CRITICAL RULES:
             },
           },
           required: [
-            'stage',
-            'stageLabel',
-            'stageSubtext',
-            'confidence',
-            'behavioralPattern',
-            'psychologicalDriver',
-            'aiSummary',
-            'stageFocusPrescription',
-            'metricAtRisk',
-            'expectedLift',
-            'takeaway',
-            'signals',
-            'interventions',
+            'stage', 'stageLabel', 'stageSubtext', 'confidence', 'behavioralPattern', 'psychologicalDriver',
+            'aiSummary', 'stageFocusPrescription', 'metricAtRisk', 'expectedLift', 'takeaway', 'signals', 'interventions',
           ],
         };
 
@@ -418,10 +370,7 @@ CRITICAL RULES:
 
         if (response.text) {
           const parsed = JSON.parse(response.text);
-          setDynamicData((prev) => ({
-            ...prev,
-            [parsed.stage]: parsed,
-          }));
+          setDynamicData((prev) => ({ ...prev, [parsed.stage]: parsed }));
           setActiveStage(parsed.stage);
         }
       } catch (e) {
@@ -447,35 +396,6 @@ CRITICAL RULES:
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
-      {/* CSS for Siri Glassmorphism & Red Pill Badge */}
-      <style>
-        {`
-          @keyframes siriSpin {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(1.15); }
-            100% { transform: rotate(360deg) scale(1); }
-          }
-          @keyframes fadeInDown {
-            0% { opacity: 0; transform: translateY(-5px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          .siri-mesh-bg {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-              radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
-              radial-gradient(circle at 30% 40%, rgba(217, 70, 239, 0.15), transparent 40%),
-              radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.15), transparent 40%);
-            animation: siriSpin 15s linear infinite;
-            z-index: 0;
-            pointer-events: none;
-          }
-        `}
-      </style>
-
       <header className="topbar">
         <div className="brand-mark" aria-label="ADOPT Engine">
           <span className="brand-mark__shape" />
@@ -574,7 +494,7 @@ CRITICAL RULES:
       )}
 
       {engineState === 'results' && (
-        <section className="results-view" aria-labelledby="results-title">
+        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '1rem' }}>
           <div className="results-heading">
             <div>
               <p className="eyebrow">DIAGNOSIS COMPLETE <span>·</span> SIGNAL RESOLVED</p>
@@ -585,88 +505,32 @@ CRITICAL RULES:
             </button>
           </div>
 
-          {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY */}
-          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '2rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
+          {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY (Single block now) */}
+          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '2.5rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
             <div className="siri-mesh-bg" />
             
             <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.05)' }}>
-              
-              {/* 1) AI Summary */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
                 <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #d946ef)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(217, 70, 239, 0.3)', marginTop: '2px' }}>
                   <Sparkles size={20} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4f46e5', fontWeight: 700, marginBottom: '0.4rem' }}>
-                    1) AI Summary & Recommendation
+                    AI SUMMARY & DIAGNOSIS
                   </div>
                   <p style={{ margin: 0, fontSize: '0.98rem', fontWeight: 500, color: '#0f172a', lineHeight: 1.6 }}>
                     {diagnosis.aiSummary}
                   </p>
                 </div>
               </div>
-
-              <div style={{ height: '1px', width: '100%', background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.1), rgba(217, 70, 239, 0.1))', margin: '0.25rem 0' }} />
-
-              {/* 2) ADOPT Focus */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-                <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '50%', background: 'rgba(51, 65, 85, 0.05)', border: '1px solid rgba(51, 65, 85, 0.1)', color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                  <Compass size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#475569', fontWeight: 700, marginBottom: '0.4rem' }}>
-                    2) ADOPT Stage Focus: {currentStageInfo.label} ({currentStageInfo.definition})
-                  </div>
-                  <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 500, color: '#334155', lineHeight: 1.55 }}>
-                    {diagnosis.stageFocusPrescription}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* TWO-ROW STAGE NAVIGATION & RED PILL BADGE (Bypassing CSS Clipping) */}
+          {/* TWO-ROW STAGE NAVIGATION & RED PILL BADGE */}
           <div style={{ marginBottom: '2rem' }}>
-            {/* Row 1: Floating Red Pills Grid */}
             <div style={{ display: 'flex', width: '100%', marginBottom: '0.4rem' }}>
               {stages.map((stage) => (
-                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', minHeight: '24px' }}>
-                  {activeStage === stage.key && (
-                    <div 
-                      style={{
-                        background: '#fef2f2',
-                        color: '#dc2626',
-                        border: '1px solid #fecaca',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '999px',
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)',
-                        animation: 'fadeInDown 0.3s ease-out'
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '12px', height: '12px', borderRadius: '50%', border: '1px solid #dc2626' }}>
-                        <span style={{ fontSize: '10px', lineHeight: 1, color: '#dc2626', marginTop: '-1px' }}>×</span>
-                      </span>
-                      RECOMMENDED FOCUS
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Row 2: Tab Navigation Buttons */}
-            {/* TWO-ROW STAGE NAVIGATION & RED PILL BADGE */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem', marginTop: '1rem' }}>
-            
-            {/* Row 1: Floating Red Pills Grid */}
-            <div style={{ display: 'flex', width: '100%', height: '32px' }}>
-              {stages.map((stage) => (
-                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minHeight: '24px' }}>
                   {activeStage === stage.key && (
                     <div 
                       style={{
@@ -683,7 +547,8 @@ CRITICAL RULES:
                         whiteSpace: 'nowrap',
                         boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
                         zIndex: 9999,
-                        transform: 'translateY(10px)' // Pushes it down slightly so it hovers right above the button
+                        transform: 'translateY(10px)',
+                        animation: 'fadeInDown 0.3s ease-out'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
@@ -696,7 +561,6 @@ CRITICAL RULES:
               ))}
             </div>
 
-            {/* Row 2: Tab Navigation Buttons */}
             <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
               {stages.map((stage) => (
                 <button
@@ -713,7 +577,6 @@ CRITICAL RULES:
                 </button>
               ))}
             </div>
-            
           </div>
 
           <div className="results-grid">
@@ -809,9 +672,14 @@ CRITICAL RULES:
                 </div>
                 <span className="intervention-count">{diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves</span>
               </div>
-              <p className="intervention-intro reveal reveal--one">
-                High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).
-              </p>
+              
+              {/* MERGED INITIATIVE PRESCRIPTION BLOCK */}
+              <div className="intervention-intro reveal reveal--one" style={{ padding: '1rem 1.25rem', background: '#f8fafc', borderLeft: '4px solid #6366f1', borderRadius: '0 0.5rem 0.5rem 0', marginBottom: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                <p style={{ margin: 0, color: '#334155', fontSize: '0.92rem', lineHeight: 1.6 }}>
+                  <strong>High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).</strong> {diagnosis.stageFocusPrescription}
+                </p>
+              </div>
+
               {diagnosis.interventions.map((intervention, index) => (
                 <article className={`intervention-card reveal reveal--${index + 2}`} key={intervention.title}>
                   <div className="intervention-card__top">
@@ -846,6 +714,35 @@ CRITICAL RULES:
         <span>Aware · Desire · Open · Proficient · Transform</span>
         <span>© 2026</span>
       </footer>
+
+      {/* Invisible Style Block Moved to the Bottom to Prevent Layout Shifts */}
+      <style>
+        {`
+          @keyframes siriSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.15); }
+            100% { transform: rotate(360deg) scale(1); }
+          }
+          @keyframes fadeInDown {
+            0% { opacity: 0; transform: translateY(-5px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .siri-mesh-bg {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+              radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
+              radial-gradient(circle at 30% 40%, rgba(217, 70, 239, 0.15), transparent 40%),
+              radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.15), transparent 40%);
+            animation: siriSpin 15s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+          }
+        `}
+      </style>
     </main>
   );
 }
