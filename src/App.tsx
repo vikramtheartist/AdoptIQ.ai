@@ -166,18 +166,33 @@ function App() {
   const diagnosis = diagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
-  const classifyPrompt = useCallback((text: string): AdoptStage => {
+ const classifyPrompt = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
+    
+    // TRANSFORM
     if (q.includes('share') || q.includes('team') || q.includes('collaborate') || q.includes('scale') || q.includes('champion') || q.includes('advocacy') || q.includes('transform')) {
       return 'TRANSFORM';
     }
+    // PROFICIENT
     if (q.includes('shortcut') || q.includes('master') || q.includes('syntax') || q.includes('day 7') || q.includes('habit') || q.includes('repeat') || q.includes('returning') || q.includes('proficient')) {
       return 'PROFICIENT';
     }
+    // DESIRE
     if (q.includes('why') || q.includes('value') || q.includes('benefit') || q.includes('roi') || q.includes('motivation') || q.includes('desire')) {
       return 'DESIRE';
     }
-    if (q.includes('find') || q.includes('discover') || q.includes('see') || q.includes('aware') || q.includes('5%') || q.includes('visibility') || q.includes('exposure')) {
+    // AWARE (Matches exposure, awareness, discovery, visibility, banners, etc.)
+    if (
+      q.includes('find') || 
+      q.includes('discover') || 
+      q.includes('see') || 
+      q.includes('aware') || 
+      q.includes('5%') || 
+      q.includes('visibility') || 
+      q.includes('exposure') || 
+      q.includes('know') ||
+      q.includes('traffic')
+    ) {
       return 'AWARE';
     }
     return 'OPEN';
