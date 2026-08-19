@@ -33,7 +33,7 @@ const stages: { key: AdoptStage; label: string; definition: string; funnelIndex:
   { key: 'AWARE', label: 'Aware', definition: 'Know about product / community', funnelIndex: '01 / AWARE' },
   { key: 'DESIRE', label: 'Desire', definition: 'Ignite interest to explore', funnelIndex: '02 / DESIRE' },
   { key: 'OPEN', label: 'Open', definition: 'Start getting value', funnelIndex: '03 / OPEN' },
-  { key: 'PROFICIENT', label: 'Proficient', definition: 'Engage in the community & workflows', funnelIndex: '04 / PROFICIENT' },
+  { key: 'PROFICIENT', label: 'Proficient', definition: 'Engage in community & daily workflow', funnelIndex: '04 / PROFICIENT' },
   { key: 'TRANSFORM', label: 'Transform', definition: 'Pillar for the community', funnelIndex: '05 / TRANSFORM' },
 ];
 
@@ -44,7 +44,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 88,
     behavioralPattern: 'Invisible Value',
     psychologicalDriver: 'Attentional Blindness',
-    aiSummary: 'Users are actively working in parallel tools without encountering entry points or discovering the solution. To drive discovery, place clear in-app cues directly within their active daily surfaces.',
+    aiSummary: 'Users are operating without encountering entry points or discovering the solution. To drive discovery, place clear contextual cues directly within their active daily workspaces.',
     stageFocusPrescription: 'Focus on the Aware stage by launching multi-channel discovery touchpoints, non-intrusive in-product banners, and leadership endorsements to enter the user consideration set.',
     metricAtRisk: 'Feature Exposure Rate (< 5%)',
     expectedLift: '+35% Reach & Exploration',
@@ -57,7 +57,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { title: 'In-Product Banners', description: 'Non-intrusive banners placed directly within relevant applications and active workflows.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Email Marketing Campaigns', description: 'Segmented campaigns highlighting immediate value and newly launched capabilities.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Leadership Communications', description: 'Top-down announcements and endorsements from organizational leaders to establish priority.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating fast tactical wins on internal hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating quick wins on internal platforms and community hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already work.',
   },
@@ -111,27 +111,26 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
   },
   PROFICIENT: {
     stageLabel: 'Habituation & Mastery Breakdown',
-    stageSubtext: 'Engage in the community / workflow',
+    stageSubtext: 'Engage in community & daily workflow',
     confidence: 94,
-    behavioralPattern: 'Habit Interruption',
+    behavioralPattern: 'Habit Interruption & Skills Gap',
     psychologicalDriver: 'High Operational Friction',
-    aiSummary: 'Organizations easily achieve pilot activation but stall before operational integration due to fragmented, ad-hoc experimentation. To scale, embed standardized, one-click routines directly inside existing core tools rather than relying on standalone surfaces.',
-    stageFocusPrescription: 'Focus entirely on the Proficient stage by replacing open-ended prompt bars with role-specific templates, zero-context-switching inline workflows, and automated task support to convert sporadic testing into daily habits.',
-    metricAtRisk: 'Week-2 Habit Retention (-68%)',
-    expectedLift: '+31% Habitual Engagement',
+    aiSummary: 'Teams lack prompt literacy and confidence in managing outputs, causing them to stall before operational integration. To bridge the skills gap, replace blank inputs with structured prompt recipes and inline verification loops.',
+    stageFocusPrescription: 'Focus entirely on the Proficient stage by introducing automated task support, role-specific prompt templates, peer QA forums, and personalized learning paths to establish mastery.',
+    metricAtRisk: 'Workflow Output Accuracy & Habit Formation (-65%)',
+    expectedLift: '+38% Self-Sustaining Weekly Usage',
     signals: [
-      { label: 'Reverted to manual clicks', detail: 'Drop-off caused by complex, slow, or multi-step execution friction.', tone: 'coral' },
-      { label: 'Week-two retention drop-off', detail: 'Repeat behavior is failing to form after initial sessions.', tone: 'blue' },
-      { label: 'Workflow fragmentation', detail: 'Users exit to legacy manual tools due to missing task support.', tone: 'lavender' },
+      { label: 'Prompt construction failure', detail: 'Users struggle to articulate instructions leading to low-quality outputs.', tone: 'coral' },
+      { label: 'Low output validation confidence', detail: 'Users lack criteria to verify and refine generated results.', tone: 'blue' },
+      { label: 'Sporadic task frequency', detail: 'Usage remains ad-hoc rather than integrating into daily workflows.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Automated Task Support', description: 'Copilot suggests shortcuts, templates, or automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Advanced In-Depth Tutorials', description: 'Targeted sessions covering advanced features, tips, and operational best practices.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-      { title: 'User Forums & Peer Communities', description: 'Spaces for peer learning and continuous Q&A on Viva Engage or internal hubs.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Personalized Learning Paths', description: 'Suggested mastery challenges and content tailored to user role or activity.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'In-App Surveys & Feedback Prompts', description: 'Quick mechanisms to gather friction feedback and address pain points.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Automated Task Support & Prompt Recipes', description: 'Provide structured, one-click prompt templates and inline syntax suggestions to eliminate blank-box anxiety.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Advanced Output Evaluation Tutorials', description: 'Practical modules teaching teams how to review, verify, and iterate on AI responses safely.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Peer Practice Forums & Prompt Libraries', description: 'Searchable internal repositories of proven, high-performing prompts organized by job function.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Personalized Role-Based Learning Paths', description: 'Step-by-step competency roadmaps to progress users from basic querying to workflow mastery.', impact: 'Medium', effort: 'Medium', priority: 'P1' },
     ],
-    takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
+    takeaway: 'Overcome the skills gap through structural scaffolding. Replace open prompt bars with guided templates and clear evaluation criteria.',
   },
   TRANSFORM: {
     stageLabel: 'Advocacy & Scaling Breakdown',
@@ -139,8 +138,8 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 92,
     behavioralPattern: 'Unshared Expertise',
     psychologicalDriver: 'Low Social & Network Leverage',
-    aiSummary: 'Power users develop highly productive behaviors, but expertise remains isolated within individual silos without organic viral spread. To scale, build communal showcase libraries and formal recognition loops.',
-    stageFocusPrescription: 'Focus on the Transform stage by creating formal Champions Programs, peer-driven template libraries, and public executive spotlights to turn isolated power users into organizational evangelists.',
+    aiSummary: 'Power users develop highly productive behaviors, but expertise remains isolated without organic peer spread. To scale, build communal showcase libraries and formal recognition loops.',
+    stageFocusPrescription: 'Focus on the Transform stage by creating formal Champions Programs, peer-driven template libraries, and public spotlights to turn power users into organizational evangelists.',
     metricAtRisk: 'Internal Viral Expansion (< 1.1x)',
     expectedLift: '+48% Organic Peer Advocacy',
     signals: [
@@ -160,9 +159,9 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
 };
 
 const suggestions = [
+  { text: 'The Skills Gap: Teams lack the specific literacy or confidence required to write effective prompts or manage AI outputs correctly.', stage: 'PROFICIENT' as AdoptStage },
   { text: '80% of organizations are experimenting with AI, but only 6 percent successfully scale it into daily workflows.', stage: 'PROFICIENT' as AdoptStage },
   { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because ROI is ambiguous.', stage: 'DESIRE' as AdoptStage },
-  { text: 'Users complete onboarding once, but revert to manual spreadsheets because multi-step rules are slow and hard.', stage: 'PROFICIENT' as AdoptStage },
 ];
 
 const analysisPhases = [
@@ -173,6 +172,7 @@ const analysisPhases = [
   'Finalizing strategic counselor playbook',
 ];
 
+// Reusing existing wave rendering
 function SignalWave({ state, activity }: { state: WaveState; activity: number }) {
   const paths = useMemo(
     () => [
@@ -229,13 +229,19 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
+  // Semantic heuristic fallback
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
 
-    // 1. PROFICIENT: Scaling experimentation into daily workflows, habit drop-offs, slow/hard friction
+    // 1. PROFICIENT: Skills gap, literacy, prompting confidence, habits, daily workflows, rules, shortcuts
     if (
-      q.includes('scale it into daily') ||
+      q.includes('skill') ||
+      q.includes('literacy') ||
+      q.includes('prompt') ||
+      q.includes('confidence') ||
+      q.includes('output') ||
       q.includes('daily workflow') ||
+      q.includes('scale it into daily') ||
       q.includes('experimenting') ||
       q.includes('shortcut') ||
       q.includes('syntax') ||
@@ -247,13 +253,12 @@ export default function App() {
       q.includes('manual') ||
       q.includes('revert') ||
       q.includes('retention') ||
-      q.includes('task support') ||
       q.includes('proficient')
     ) {
       return 'PROFICIENT';
     }
 
-    // 2. TRANSFORM: Scaling community champions, organizational advocacy
+    // 2. TRANSFORM: Scaling expertise, champion advocacy, community templates
     if (
       q.includes('champion') ||
       q.includes('advoca') ||
@@ -261,7 +266,8 @@ export default function App() {
       q.includes('pillar') ||
       q.includes('transform') ||
       q.includes('spotlight') ||
-      (q.includes('share') && q.includes('team'))
+      (q.includes('share') && q.includes('team')) ||
+      q.includes('scale across')
     ) {
       return 'TRANSFORM';
     }
@@ -289,7 +295,8 @@ export default function App() {
       q.includes('find') ||
       q.includes('visibility') ||
       q.includes('banner') ||
-      q.includes('exposure')
+      q.includes('exposure') ||
+      q.includes('know about')
     ) {
       return 'AWARE';
     }
@@ -309,6 +316,7 @@ export default function App() {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
+    // Set immediate heuristic
     const detectedStage = classifyInput(textToAnalyze);
     setActiveStage(detectedStage);
 
@@ -323,16 +331,17 @@ export default function App() {
         const systemInstruction = `
 You are the ADOPT Senior Behavioral Intelligence Counselor.
 Your role is to diagnose user adoption roadmaps, friction points, or telemetry and synthesize them into the standard ADOPT framework:
-- AWARE: Know about product/community (Banners, segmented email, leadership comms, micro-videos).
-- DESIRE: Ignite interest to explore (Landing page value, interactive ROI calculators, tour sliders, interactive sandbox demos).
-- OPEN: Start getting value (First-Run Experiences, guided tours, AI onboarding bots, SSO pre-configuration).
-- PROFICIENT: Engage in community / daily workflows (Habit integration, automated task support, advanced tutorials, peer forums, learning paths).
-- TRANSFORM: Pillar for the community (Champions programs, user-led success stories, community spotlights, recognition & rewards).
+- AWARE ("Know about community/product"): Feature discovery, exposure, awareness, banners, announcements.
+- DESIRE ("Ignite interest to explore"): Value clarity, motivation, ROI calculation, trial conversion, landing pages, interactive demos.
+- OPEN ("Start getting value"): Activation, first-run experiences (FRE), guided tours, AI onboarding bots, SSO pre-configuration.
+- PROFICIENT ("Engage in community & daily workflows"): Skills gaps, prompt literacy, managing outputs, habit integration, automated task support, advanced tutorials, peer forums.
+- TRANSFORM ("Pillar for the community"): Champions programs, user-led success stories, community spotlights, recognition & rewards, organic scaling.
 
-CRITICAL CONSULTING OUTPUT FORMAT:
-1. aiSummary: Exactly 2 to 3 sentences summarizing the root behavioral roadblock and immediate strategic direction (e.g. "Organizations easily achieve pilot activation but stall before operational integration due to fragmented, ad-hoc experimentation. To scale, embed standardized, one-click routines directly inside existing core tools rather than relying on standalone chat apps.").
-2. stageFocusPrescription: Exactly 1 to 2 sentences starting with "Focus on the [Stage Name] stage by..." detailing the exact UX/process shifts.
-3. Classify "scaling experiments into daily workflows", "complex multi-step rules", or "reverting to manual habits" strictly as "PROFICIENT".
+CRITICAL CLASSIFICATION RULE:
+- Any problem regarding "skills gaps", "lacking prompt literacy", "confidence in writing prompts or outputs", "slow/hard rules", or "scaling experiments into daily habits" MUST be classified as "PROFICIENT".
+- Do NOT classify as TRANSFORM unless the core problem is power users lacking sharing mechanisms.
+- Provide aiSummary as 2 to 3 sentences directly diagnosing the user's exact problem.
+- Provide stageFocusPrescription as 1 to 2 actionable sentences detailing how to solve it within the ADOPT stage.
 `;
         const responseSchema: Schema = {
           type: Type.OBJECT,
@@ -434,6 +443,31 @@ CRITICAL CONSULTING OUTPUT FORMAT:
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
+      {/* Dynamic Keyframes for Siri Animation */}
+      <style>
+        {`
+          @keyframes siriSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.15); }
+            100% { transform: rotate(360deg) scale(1); }
+          }
+          .siri-mesh-bg {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+              radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
+              radial-gradient(circle at 30% 40%, rgba(217, 70, 239, 0.15), transparent 40%),
+              radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.15), transparent 40%);
+            animation: siriSpin 15s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+          }
+        `}
+      </style>
+
       <header className="topbar">
         <div className="brand-mark" aria-label="ADOPT Engine">
           <span className="brand-mark__shape" />
@@ -543,35 +577,44 @@ CRITICAL CONSULTING OUTPUT FORMAT:
             </button>
           </div>
 
-          {/* TWO-TIER COUNSELOR PRESCRIPTION BLOCK */}
-          <div style={{ margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {/* 1) AI Summary & Recommendation */}
-            <div style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.07), rgba(168, 85, 247, 0.05))', border: '1px solid rgba(99, 102, 241, 0.22)', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-              <div style={{ width: '2.2rem', height: '2.2rem', borderRadius: '0.6rem', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                <Sparkles size={18} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#4f46e5', fontWeight: 600, marginBottom: '0.35rem' }}>
-                  1) AI Summary & Recommendation
+          {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY */}
+          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '2rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
+            {/* Animated Mesh Layer */}
+            <div className="siri-mesh-bg" />
+            
+            {/* Glass Content Panel */}
+            <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.05)' }}>
+              
+              {/* 1) AI Summary */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
+                <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #d946ef)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(217, 70, 239, 0.3)', marginTop: '2px' }}>
+                  <Sparkles size={20} />
                 </div>
-                <p style={{ margin: 0, fontSize: '0.94rem', fontWeight: 500, color: '#1e293b', lineHeight: 1.6 }}>
-                  {diagnosis.aiSummary}
-                </p>
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4f46e5', fontWeight: 700, marginBottom: '0.4rem' }}>
+                    1) AI Summary & Recommendation
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.98rem', fontWeight: 500, color: '#0f172a', lineHeight: 1.6 }}>
+                    {diagnosis.aiSummary}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* 2) ADOPT Stage Focus */}
-            <div style={{ padding: '1.1rem 1.5rem', borderRadius: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-              <div style={{ width: '2.2rem', height: '2.2rem', borderRadius: '0.6rem', background: '#334155', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                <Compass size={18} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#475569', fontWeight: 600, marginBottom: '0.35rem' }}>
-                  2) ADOPT Stage Focus: {currentStageInfo.label} ({currentStageInfo.definition})
+              <div style={{ height: '1px', width: '100%', background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.1), rgba(217, 70, 239, 0.1))', margin: '0.25rem 0' }} />
+
+              {/* 2) ADOPT Focus */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
+                <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '50%', background: 'rgba(51, 65, 85, 0.05)', border: '1px solid rgba(51, 65, 85, 0.1)', color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                  <Compass size={20} />
                 </div>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: '#334155', lineHeight: 1.55 }}>
-                  {diagnosis.stageFocusPrescription}
-                </p>
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#475569', fontWeight: 700, marginBottom: '0.4rem' }}>
+                    2) ADOPT Stage Focus: {currentStageInfo.label} ({currentStageInfo.definition})
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 500, color: '#334155', lineHeight: 1.55 }}>
+                    {diagnosis.stageFocusPrescription}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -595,7 +638,6 @@ CRITICAL CONSULTING OUTPUT FORMAT:
 
           <div className="results-grid">
             <div className="results-left">
-              {/* PRIMARY DIAGNOSIS CARD */}
               <article className="diagnosis-card reveal reveal--one" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: '#131722', color: '#f8fafc', border: '1px solid #232936' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#94a3b8', textTransform: 'uppercase' }}>
@@ -623,10 +665,6 @@ CRITICAL CONSULTING OUTPUT FORMAT:
                     <span style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', fontFamily: 'monospace' }}>Confidence</span>
                   </div>
                 </div>
-
-                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.55, margin: '0 0 1.25rem 0', fontWeight: 400 }}>
-                  {diagnosis.aiSummary}
-                </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0.85rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
                   <div>
