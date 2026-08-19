@@ -33,7 +33,7 @@ const stages: { key: AdoptStage; label: string }[] = [
 ];
 
 const diagnoses: Record<AdoptStage, Diagnosis> = {
-  AAWARE: {
+  AWARE: {
     stageLabel: 'Discovery breakdown',
     confidence: 88,
     behavioralPattern: 'Invisible value',
@@ -76,8 +76,29 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
     ],
     takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already are.',
   },
+  DESIRE: {
+    stageLabel: 'Motivation breakdown',
+    confidence: 82,
+    behavioralPattern: 'Value ambiguity',
+    psychologicalDriver: 'Unclear reward',
+    diagnosis: 'Users understand that the capability exists, but the path from trying it to a meaningful outcome is not compelling enough to create intent.',
+    signals: [
+      { label: 'High awareness, low intent', detail: 'Recognition does not translate into trial.', tone: 'coral' },
+      { label: 'Value language is abstract', detail: 'Users cannot predict a concrete outcome.', tone: 'blue' },
+      { label: 'Drop-off before trial', detail: 'Interest fades before first action.', tone: 'lavender' },
+    ],
+    interventions: [
+      { title: 'Outcome-first framing', description: 'Lead with a concrete, recognizable result instead of describing the capability itself.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Proof in the moment', description: 'Show a small, credible example of the value users can unlock in one session.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Role-based success paths', description: 'Tailor the opening promise to the user’s job, intent, and immediate context.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+    ],
+    takeaway: "Adoption isn't failing because users are unaware. They're failing to see a valuable enough reason to begin.",
+  },
   OPEN: {
-    stageLabel: 'Activation breakdown', confidence: 87, behavioralPattern: 'Blank-canvas paralysis', psychologicalDriver: 'Cognitive overload',
+    stageLabel: 'Activation breakdown',
+    confidence: 87,
+    behavioralPattern: 'Blank-canvas paralysis',
+    psychologicalDriver: 'Cognitive overload',
     diagnosis: 'Users successfully discover the core value proposition, but activation breaks before the first meaningful engagement.',
     signals: [
       { label: '42% activation rate drop-off', detail: 'Measured between generic landing and first input engagement.', tone: 'coral' },
@@ -93,7 +114,10 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
     takeaway: "Adoption isn't failing because users don't have access. They're failing at the moment of activation.",
   },
   PROFICIENT: {
-    stageLabel: 'Mastery breakdown', confidence: 74, behavioralPattern: 'Habit interruption', psychologicalDriver: 'Low reinforcement',
+    stageLabel: 'Mastery breakdown',
+    confidence: 74,
+    behavioralPattern: 'Habit interruption',
+    psychologicalDriver: 'Low reinforcement',
     diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
     signals: [
       { label: 'Strong first session', detail: 'Initial value is visible and measurable.', tone: 'coral' },
@@ -108,7 +132,10 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
     takeaway: "Adoption isn't failing at first value. It is failing to turn that value into a reliable habit.",
   },
   TRANSFORM: {
-    stageLabel: 'Advocacy breakdown', confidence: 68, behavioralPattern: 'Unshared expertise', psychologicalDriver: 'Low social leverage',
+    stageLabel: 'Advocacy breakdown',
+    confidence: 68,
+    behavioralPattern: 'Unshared expertise',
+    psychologicalDriver: 'Low social leverage',
     diagnosis: 'Power users have developed productive behaviors, but the product gives them no clear way to scale that expertise across their organization.',
     signals: [
       { label: 'Power users are isolated', detail: 'Successful patterns stay within individual accounts.', tone: 'coral' },
@@ -166,22 +193,17 @@ function App() {
   const diagnosis = diagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
- const classifyPrompt = useCallback((text: string): AdoptStage => {
+  const classifyPrompt = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
-    
-    // TRANSFORM
     if (q.includes('share') || q.includes('team') || q.includes('collaborate') || q.includes('scale') || q.includes('champion') || q.includes('advocacy') || q.includes('transform')) {
       return 'TRANSFORM';
     }
-    // PROFICIENT
     if (q.includes('shortcut') || q.includes('master') || q.includes('syntax') || q.includes('day 7') || q.includes('habit') || q.includes('repeat') || q.includes('returning') || q.includes('proficient')) {
       return 'PROFICIENT';
     }
-    // DESIRE
     if (q.includes('why') || q.includes('value') || q.includes('benefit') || q.includes('roi') || q.includes('motivation') || q.includes('desire')) {
       return 'DESIRE';
     }
-    // AWARE (Matches exposure, awareness, discovery, visibility, banners, etc.)
     if (
       q.includes('find') || 
       q.includes('discover') || 
@@ -189,7 +211,7 @@ function App() {
       q.includes('aware') || 
       q.includes('5%') || 
       q.includes('visibility') || 
-      q.includes('exposure') || 
+      q.includes('exposure') ||
       q.includes('know') ||
       q.includes('traffic')
     ) {
