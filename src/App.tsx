@@ -5,10 +5,7 @@ import {
   Plus, 
   RotateCcw, 
   Sparkles, 
-  ShieldCheck,
-  Zap,
-  BookOpen,
-  Command
+  ShieldCheck 
 } from 'lucide-react';
 
 export type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
@@ -116,19 +113,19 @@ const STAGE_DATABASE: Record<AdoptStage, StageData> = {
     interventions: [
       {
         title: 'Contextual Shortcut Palette',
-        description: 'Efficiency',
+        description: 'Dynamic overlay teaching command keystrokes contextually during repetitive tasks.',
         impact: 'High Impact',
         type: 'Efficiency'
       },
       {
         title: 'Prompt of the Week Cards',
-        description: 'Skill Acceleration',
+        description: 'Bite-sized mastery challenges embedded in the workspace toolbar.',
         impact: 'High Impact',
         type: 'Skill Acceleration'
       },
       {
         title: 'Smart Auto-Completion Engine',
-        description: 'Assistance',
+        description: 'Suggest syntax completions inline as users formulate complex queries.',
         impact: 'Medium Impact',
         type: 'Assistance'
       }
@@ -193,6 +190,8 @@ export default function App() {
 
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
+
+    // PROFICIENT
     if (
       q.includes('shortcut') ||
       q.includes('master') ||
@@ -205,16 +204,20 @@ export default function App() {
     ) {
       return 'PROFICIENT';
     }
+
+    // TRANSFORM (Sharing, Collaboration, Team Scale)
     if (
       q.includes('share') ||
       q.includes('team') ||
       q.includes('champion') ||
       q.includes('scale') ||
-      q.includes('collab') ||
+      q.includes('collaborate') ||
       q.includes('transform')
     ) {
       return 'TRANSFORM';
     }
+
+    // DESIRE
     if (
       q.includes('why') ||
       q.includes('value') ||
@@ -224,6 +227,8 @@ export default function App() {
     ) {
       return 'DESIRE';
     }
+
+    // AWARE
     if (
       q.includes('find') ||
       q.includes('discover') ||
@@ -235,6 +240,7 @@ export default function App() {
     ) {
       return 'AWARE';
     }
+
     return 'OPEN';
   }, []);
 
@@ -267,7 +273,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-white text-slate-900 flex flex-col justify-between selection:bg-purple-100 selection:text-purple-900 relative overflow-hidden font-sans">
-      {/* Top Navbar */}
+      {/* Header */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-md bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center shadow-sm">
@@ -298,9 +304,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <div className="w-full max-w-5xl mx-auto px-6 py-6 z-10 flex-1 flex flex-col justify-center">
-        {/* VIEW 1: SEARCH / LANDING */}
+        {/* VIEW 1: Input Screen */}
         {engineState === 'diagnose' && (
           <div className="w-full flex flex-col items-center text-center max-w-3xl mx-auto animate-in fade-in duration-300">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100/80 border border-slate-200 text-[11px] font-mono tracking-wider text-slate-500 uppercase mb-6">
@@ -317,11 +323,9 @@ export default function App() {
               Give the engine messy signals. Get the behavioral reason — and the next best move.
             </p>
 
-            {/* Siri Glow Behind Input */}
             <div className="relative w-full max-w-2xl group mb-6">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-400/35 via-blue-400/35 to-teal-300/35 rounded-full blur-xl opacity-90 transition duration-500 pointer-events-none" />
               
-              {/* White Pill Search Bar */}
               <div className="relative flex items-center bg-white border border-slate-200/90 rounded-full shadow-lg hover:shadow-xl transition-shadow px-4 py-2">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer transition-colors">
                   <Plus className="w-5 h-5" />
@@ -355,7 +359,6 @@ export default function App() {
               Describe a friction point, user feedback, or telemetry drop-off. The ADOPT Engine will generate strategic solutions based on your enterprise library.
             </p>
 
-            {/* Quick Sample Recommendation Cards */}
             <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
               {SAMPLE_PROMPTS.map((item) => (
                 <button
@@ -377,7 +380,7 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 2: ANALYZING PULSE */}
+        {/* VIEW 2: Analyzing State */}
         {engineState === 'analyzing' && (
           <div className="w-full flex flex-col items-center justify-center text-center py-20 animate-in fade-in duration-300">
             <div className="relative mb-6">
@@ -396,10 +399,9 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 3: DIAGNOSIS RESULT CARD */}
+        {/* VIEW 3: Results Display */}
         {engineState === 'results' && (
           <div className="w-full bg-[#0d121f] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl animate-in fade-in duration-300 text-slate-100">
-            {/* Header Status */}
             <div className="flex items-center justify-between pb-6 border-b border-slate-800/80 mb-6">
               <div className="flex items-center gap-2 text-xs font-mono tracking-wider text-slate-400 uppercase">
                 <span>02 / BEHAVIORAL DIAGNOSIS</span>
@@ -410,7 +412,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Stage Identification Header */}
             <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
               <div className="px-6 py-4 rounded-xl bg-[#141b33] border border-indigo-500/40 text-indigo-300 font-mono font-bold text-sm tracking-widest uppercase shrink-0 text-center">
                 {currentData.stage}
@@ -430,7 +431,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Prescribed UX Interventions */}
             <div className="mb-10">
               <h3 className="text-xs font-mono tracking-wider text-slate-400 uppercase mb-4">
                 PRESCRIBED UX INTERVENTIONS
@@ -464,7 +464,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* 5-Stage Timeline Stepper */}
             <div className="pt-6 border-t border-slate-800/80">
               <div className="grid grid-cols-5 gap-3 mb-2">
                 {STAGES_ORDER.map((stage) => {
