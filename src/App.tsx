@@ -702,22 +702,61 @@ CRITICAL RULES:
                 </div>
               </article>
 
-              <article className="evidence-card reveal reveal--two">
-                <div className="section-label">Evidence signals <span>· {diagnosis.signals.length} found</span></div>
-                <div className="signal-list">
-                  {diagnosis.signals.map((signal, index) => (
-                    <div className={`evidence-row evidence-row--${signal.tone}`} key={signal.label}>
-                      <div className="evidence-icon">
-                        {index === 0 ? <TrendingDown size={16} /> : index === 1 ? <Clock3 size={16} /> : <MousePointer2 size={15} />}
-                      </div>
-                      <div>
-                        <strong>{signal.label}</strong>
-                        <span>{signal.detail}</span>
-                      </div>
-                    </div>
-                  ))}
+              {/* UPDATED EVIDENCE CARD */}
+              <article className="evidence-card reveal reveal--two" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: '#131722', color: '#f8fafc', border: '1px solid #232936', marginTop: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#94a3b8', textTransform: 'uppercase' }}>
+                    EVIDENCE SIGNALS
+                  </div>
+                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#64748b', fontWeight: 600 }}>
+                    {diagnosis.signals.length} FOUND
+                  </span>
                 </div>
-                <button className="telemetry-link">View raw telemetry logs <ArrowUpRight size={15} /></button>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {diagnosis.signals.map((signal, index) => {
+                    const waveColors = ['#c084fc', '#38bdf8', '#2563eb']; // Lavender, Cyan, Deep Blue
+                    const color = waveColors[index % waveColors.length];
+
+                    return (
+                      <div key={signal.label} style={{ 
+                        display: 'flex', 
+                        alignItems: 'flex-start', 
+                        gap: '1rem', 
+                        padding: '1rem', 
+                        borderRadius: '0.75rem', 
+                        background: 'rgba(255,255,255,0.03)', 
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        borderLeft: `3px solid ${color}` 
+                      }}>
+                        <div style={{ color: color, marginTop: '2px' }}>
+                          {index === 0 ? <TrendingDown size={18} /> : index === 1 ? <Clock3 size={18} /> : <MousePointer2 size={18} />}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <strong style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc' }}>{signal.label}</strong>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.4 }}>{signal.detail}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <button style={{ 
+                    background: 'none', 
+                    border: 'none', 
+                    color: '#94a3b8', 
+                    fontSize: '0.75rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.35rem', 
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'color 0.2s ease'
+                  }}>
+                    View raw telemetry logs <ArrowUpRight size={14} />
+                  </button>
+                </div>
               </article>
             </div>
 
