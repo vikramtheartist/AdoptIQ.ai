@@ -172,7 +172,6 @@ const analysisPhases = [
   'Finalizing strategic counselor playbook',
 ];
 
-// Reusing existing wave rendering
 function SignalWave({ state, activity }: { state: WaveState; activity: number }) {
   const paths = useMemo(
     () => [
@@ -229,11 +228,11 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
-  // Semantic heuristic fallback
+  // Semantic heuristic fallback grounded strictly in ADOPT documentation
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
 
-    // 1. PROFICIENT: Skills gap, literacy, prompting confidence, habits, daily workflows, rules, shortcuts
+    // 1. PROFICIENT: Skills gap, literacy, prompting confidence, habits, daily workflows, rules, shortcuts, revert to manual
     if (
       q.includes('skill') ||
       q.includes('literacy') ||
@@ -328,20 +327,25 @@ export default function App() {
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
+        
+        // System Instruction acting as the Behavioral Counselor mapping to ADOPT theory
         const systemInstruction = `
 You are the ADOPT Senior Behavioral Intelligence Counselor.
-Your role is to diagnose user adoption roadmaps, friction points, or telemetry and synthesize them into the standard ADOPT framework:
-- AWARE ("Know about community/product"): Feature discovery, exposure, awareness, banners, announcements.
-- DESIRE ("Ignite interest to explore"): Value clarity, motivation, ROI calculation, trial conversion, landing pages, interactive demos.
-- OPEN ("Start getting value"): Activation, first-run experiences (FRE), guided tours, AI onboarding bots, SSO pre-configuration.
-- PROFICIENT ("Engage in community & daily workflows"): Skills gaps, prompt literacy, managing outputs, habit integration, automated task support, advanced tutorials, peer forums.
-- TRANSFORM ("Pillar for the community"): Champions programs, user-led success stories, community spotlights, recognition & rewards, organic scaling.
+Your role is to diagnose user adoption roadmaps and synthesize them into the ADOPT behavioral framework. 
+Remember: Adoption is a human behavior problem, not just a UX problem, driven by status quo bias and loss aversion.
 
-CRITICAL CLASSIFICATION RULE:
-- Any problem regarding "skills gaps", "lacking prompt literacy", "confidence in writing prompts or outputs", "slow/hard rules", or "scaling experiments into daily habits" MUST be classified as "PROFICIENT".
-- Do NOT classify as TRANSFORM unless the core problem is power users lacking sharing mechanisms.
-- Provide aiSummary as 2 to 3 sentences directly diagnosing the user's exact problem.
-- Provide stageFocusPrescription as 1 to 2 actionable sentences detailing how to solve it within the ADOPT stage.
+Map the input to the exact 5 ADOPT stages:
+1. AWARE ("Know about community"): Ringing the Jingle. Broadcast existence. Tactics: In-Product Banners, Segmented Email, Leadership Comms, Micro-Content/Short-Form Video. Metric: Reach, CTR.
+2. DESIRE ("Ignite Interest to explore"): Showing the Scoop. Build emotional hook. Tactics: Landing page, Take a tour sliders, Benefit-Oriented Messaging, User Testimonials, Interactive Demos. Metric: Demo signups, Clicks.
+3. OPEN ("Start getting value"): The Starter Sundae. Remove first-use friction/blank-canvas paralysis. Tactics: FRE & Guided Tours, Quick Start Guides, AI Onboarding Bots, SSO, Contextual Help. Metric: Onboarding completion, First-time usage.
+4. PROFICIENT ("Engage in the community"): The Recipe Card. Enable skill-building, habit formation, prompt literacy, scaling into daily workflows. Tactics: Automated Task Support, Advanced Tutorials, User Forums, Knowledge Base, Learning Paths. Metric: Feature adoption, Session frequency.
+5. TRANSFORM ("Pillar for the community"): The Community Franchise. Scale advocacy. Tactics: Champions Programs, User-Led Success Stories, Idea Submission, Community Spotlights, Recognition & Rewards, Leadership Analytics Dashboards. Metric: Referrals, Contributions.
+
+CRITICAL RULES:
+- If the input involves "skills gap", "prompting literacy", "scaling into daily workflows", or "reverting to manual clicks", you MUST classify as "PROFICIENT". Do NOT classify as TRANSFORM unless the core problem is power users lacking sharing mechanisms.
+- aiSummary MUST be 2-3 sentences. It must diagnose the root behavioral roadblock (e.g., status quo bias, cognitive overload) and state the immediate strategic direction using ADOPT principles.
+- stageFocusPrescription MUST be 1-2 sentences starting with "Focus on the [Stage] stage by..." and detail the exact UX shifts aligned to that stage.
+- interventions MUST exclusively use the tactics defined in the stage descriptions above.
 `;
         const responseSchema: Schema = {
           type: Type.OBJECT,
@@ -443,13 +447,17 @@ CRITICAL CLASSIFICATION RULE:
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
-      {/* Dynamic Keyframes for Siri Animation */}
+      {/* CSS for Siri Glassmorphism & Red Pill Badge */}
       <style>
         {`
           @keyframes siriSpin {
             0% { transform: rotate(0deg) scale(1); }
             50% { transform: rotate(180deg) scale(1.15); }
             100% { transform: rotate(360deg) scale(1); }
+          }
+          @keyframes fadeInDown {
+            0% { opacity: 0; transform: translateY(-5px); }
+            100% { opacity: 1; transform: translateY(0); }
           }
           .siri-mesh-bg {
             position: absolute;
@@ -579,10 +587,8 @@ CRITICAL CLASSIFICATION RULE:
 
           {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY */}
           <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '2rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
-            {/* Animated Mesh Layer */}
             <div className="siri-mesh-bg" />
             
-            {/* Glass Content Panel */}
             <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.05)' }}>
               
               {/* 1) AI Summary */}
@@ -619,22 +625,19 @@ CRITICAL CLASSIFICATION RULE:
             </div>
           </div>
 
-          <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ paddingTop: '2rem', display: 'flex', gap: '0.5rem' }}>
-            {stages.map((stage) => {
-              const isActive = activeStage === stage.key;
-              return (
-                <div key={stage.key} style={{ position: 'relative', flex: 1, display: 'flex' }}>
-                  {isActive && (
+          {/* TWO-ROW STAGE NAVIGATION & RED PILL BADGE (Bypassing CSS Clipping) */}
+          <div style={{ marginBottom: '2rem' }}>
+            {/* Row 1: Floating Red Pills Grid */}
+            <div style={{ display: 'flex', width: '100%', marginBottom: '0.4rem' }}>
+              {stages.map((stage) => (
+                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', minHeight: '24px' }}>
+                  {activeStage === stage.key && (
                     <div 
                       style={{
-                        position: 'absolute',
-                        top: '-1.8rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#fef2f2', // Soft red background matching your reference
-                        color: '#dc2626', // Dark red text
-                        border: '1px solid #fecaca', // Subtle red border
-                        padding: '0.25rem 0.6rem',
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        border: '1px solid #fecaca',
+                        padding: '0.2rem 0.6rem',
                         borderRadius: '999px',
                         fontSize: '0.65rem',
                         fontWeight: 600,
@@ -643,32 +646,36 @@ CRITICAL CLASSIFICATION RULE:
                         gap: '0.35rem',
                         whiteSpace: 'nowrap',
                         boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)',
-                        zIndex: 10,
                         animation: 'fadeInDown 0.3s ease-out'
                       }}
                     >
-                      {/* Inner red dot / cross icon representation */}
                       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '12px', height: '12px', borderRadius: '50%', border: '1px solid #dc2626' }}>
                         <span style={{ fontSize: '10px', lineHeight: 1, color: '#dc2626', marginTop: '-1px' }}>×</span>
                       </span>
                       RECOMMENDED FOCUS
                     </div>
                   )}
-                  <button
-                    role="tab"
-                    style={{ width: '100%' }}
-                    aria-selected={isActive}
-                    className={isActive ? 'is-active' : ''}
-                    onClick={() => {
-                      setActiveStage(stage.key);
-                      setGenerated(null);
-                    }}
-                  >
-                    {stage.label}
-                  </button>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* Row 2: Tab Navigation Buttons */}
+            <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ marginTop: '0' }}>
+              {stages.map((stage) => (
+                <button
+                  key={stage.key}
+                  role="tab"
+                  aria-selected={activeStage === stage.key}
+                  className={activeStage === stage.key ? 'is-active' : ''}
+                  onClick={() => {
+                    setActiveStage(stage.key);
+                    setGenerated(null);
+                  }}
+                >
+                  {stage.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="results-grid">
