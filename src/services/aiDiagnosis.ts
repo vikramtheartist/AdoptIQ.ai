@@ -14,6 +14,7 @@ export interface DynamicDiagnosisPayload {
   confidence: number;
   behavioralPattern: string;
   psychologicalDriver: string;
+  strategicPrescription: string;
   problemSummary: string;
   takeaway: string;
   signals: {
@@ -30,32 +31,18 @@ const responseSchema: Schema = {
     stage: {
       type: Type.STRING,
       enum: ['AWARE', 'DESIRE', 'OPEN', 'PROFICIENT', 'TRANSFORM'],
-      description: 'The diagnosed ADOPT framework stage.',
+      description: 'The diagnosed ADOPT stage.',
     },
-    stageLabel: {
+    stageLabel: { type: Type.STRING },
+    confidence: { type: Type.INTEGER },
+    behavioralPattern: { type: Type.STRING },
+    psychologicalDriver: { type: Type.STRING },
+    strategicPrescription: {
       type: Type.STRING,
-      description: 'E.g., "Motivation breakdown", "Discovery breakdown", "Activation breakdown".',
+      description: 'A crisp, 2-sentence actionable tactical direction. Do NOT summarize the user problem. Tell the team exactly what to build or change (e.g., "Default to visual UI, enable Cmd+K palette with inline hints, and scaffold syntax progressively.").',
     },
-    confidence: {
-      type: Type.INTEGER,
-      description: 'Confidence score between 75 and 98.',
-    },
-    behavioralPattern: {
-      type: Type.STRING,
-      description: 'The specific behavioral pattern observed, e.g., "Value Ambiguity", "Blank-Canvas Paralysis".',
-    },
-    psychologicalDriver: {
-      type: Type.STRING,
-      description: 'Root psychological friction, e.g., "Unclear Reward", "Cognitive Overload".',
-    },
-    problemSummary: {
-      type: Type.STRING,
-      description: 'A 1-2 sentence executive diagnosis tailored specifically using the vocabulary of the user problem.',
-    },
-    takeaway: {
-      type: Type.STRING,
-      description: 'A punchy, actionable rule of thumb reflecting their exact context.',
-    },
+    problemSummary: { type: Type.STRING },
+    takeaway: { type: Type.STRING },
     signals: {
       type: Type.ARRAY,
       items: {
@@ -89,6 +76,7 @@ const responseSchema: Schema = {
     'confidence',
     'behavioralPattern',
     'psychologicalDriver',
+    'strategicPrescription',
     'problemSummary',
     'takeaway',
     'signals',
@@ -105,18 +93,17 @@ export async function generateDynamicDiagnosis(userPrompt: string): Promise<Dyna
   const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = `
-You are the ADOPT Intelligence Engine, an expert product psychologist and growth engineer.
-Your task is to analyze user adoption friction, telemetry, or user feedback and diagnose which ADOPT stage is broken:
-- AWARE: Users don't know the feature exists / invisible entry points.
-- DESIRE: Users know it exists, but lack motivation, unclear ROI, or ambiguous benefits.
-- OPEN: Users attempt activation, but fail during setup due to cognitive friction or blank-canvas paralysis.
-- PROFICIENT: Users reach first value, but habit breaks, shortcuts/syntax are complex, or week-2 retention drops.
-- TRANSFORM: Power users love it, but cannot share, collaborate, or scale it across their team/organization.
+You are the ADOPT Intelligence Engine. Analyze friction, telemetry, or user feedback and diagnose which ADOPT stage is broken:
+- AWARE: Discovery, reach, invisible entry points, banners, announcement channels.
+- DESIRE: Acquisition, landing page, ambiguous ROI, trial conversion, benefit proof.
+- OPEN: Activation, onboarding, blank-canvas paralysis, step-by-step setup, SSO.
+- PROFICIENT: Retention, shortcuts, advanced syntax, complex rules, habituation, week-2 drop-offs.
+- TRANSFORM: Scaling, team sharing, champion mentorship, peer templates, organizational advocacy.
 
-CRITICAL INSTRUCTIONS:
-1. Deeply personalize the vocabulary. If the user mentions "automation add-on" and "< 2% conversion", your diagnosis, signals, and interventions must directly address the automation add-on and conversion math.
-2. Provide 3 to 5 hyper-specific, actionable interventions that solve their exact problem.
-3. Generate realistic telemetry signals reflecting their inputs.
+DIAGNOSIS RULES:
+1. If users struggle with shortcuts, advanced rules, syntax, or building repeat habits after first use, route strictly to PROFICIENT.
+2. Provide 'strategicPrescription': Exactly 2 sentences stating what UI/UX modifications to make. Never repeat the user's problem.
+3. Generate 3 to 5 interventions tailored with contextual UI terms reflecting the diagnosed stage.
 `;
 
   const response = await ai.models.generateContent({

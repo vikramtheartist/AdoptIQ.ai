@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown, RefreshCw } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown } from 'lucide-react';
 import { generateDynamicDiagnosis, DynamicDiagnosisPayload } from './services/aiDiagnosis';
 
 type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
@@ -19,6 +19,7 @@ type Diagnosis = {
   confidence: number;
   behavioralPattern: string;
   psychologicalDriver: string;
+  strategicPrescription?: string;
   diagnosis: string;
   signals: { label: string; detail: string; tone: 'coral' | 'blue' | 'lavender' }[];
   interventions: Intervention[];
@@ -39,6 +40,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 88,
     behavioralPattern: 'Invisible value',
     psychologicalDriver: 'Attentional blindness',
+    strategicPrescription: 'Embed non-intrusive contextual cues within core daily tools and launch segmented notification bursts to drive high-intent discovery.',
     diagnosis: 'Users are not encountering the capability at the moment they have a relevant need, so its value never enters their consideration set.',
     signals: [
       { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent sessions.', tone: 'coral' },
@@ -58,6 +60,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 85,
     behavioralPattern: 'Value ambiguity',
     psychologicalDriver: 'Unclear reward',
+    strategicPrescription: 'Shift landing copy from feature descriptions to quantified before/after outcomes, and add an interactive ROI calculator above the fold.',
     diagnosis: 'Users understand that the capability exists, but the path from trying it to a meaningful outcome is not compelling enough to create intent.',
     signals: [
       { label: 'High awareness, low intent', detail: 'Recognition does not translate into active trial.', tone: 'coral' },
@@ -77,6 +80,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 89,
     behavioralPattern: 'Blank-canvas paralysis',
     psychologicalDriver: 'Cognitive overload',
+    strategicPrescription: 'Eliminate zero-state anxiety with pre-seeded templates and replace multi-step modals with progressive single-click setup cues.',
     diagnosis: 'Users successfully discover the core value proposition, but activation breaks before the first meaningful engagement.',
     signals: [
       { label: '42% activation rate drop-off', detail: 'Measured between generic landing and first input engagement.', tone: 'coral' },
@@ -96,6 +100,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 84,
     behavioralPattern: 'Habit interruption',
     psychologicalDriver: 'Low reinforcement',
+    strategicPrescription: 'Default to a visual UI, enable a plain-text command palette (Cmd+K) with inline shortcut hints, and scaffold complex syntax progressively.',
     diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
     signals: [
       { label: 'Strong first session', detail: 'Initial value is visible and measurable.', tone: 'coral' },
@@ -115,6 +120,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 92,
     behavioralPattern: 'Unshared expertise',
     psychologicalDriver: 'Low social leverage',
+    strategicPrescription: 'Launch a 1-click workspace blueprint publisher and recognize power users through public spotlight galleries.',
     diagnosis: 'Power users have developed productive behaviors, but the product gives them no clear way to scale that expertise across their organization.',
     signals: [
       { label: 'Power users are isolated', detail: 'Successful patterns stay within individual accounts.', tone: 'coral' },
@@ -133,7 +139,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
 
 const suggestions = [
   { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because the ROI and concrete benefits are ambiguous.', stage: 'DESIRE' as AdoptStage },
-  { text: 'Users are trying once but not returning because shortcuts are hard', stage: 'PROFICIENT' as AdoptStage },
+  { text: 'Users complete the first workflow successfully, but week-two retention drops off because the keyboard shortcuts and advanced syntax are too complex to build a habit.', stage: 'PROFICIENT' as AdoptStage },
   { text: 'Feature discovery is under 5%', stage: 'AWARE' as AdoptStage },
 ];
 
@@ -191,8 +197,7 @@ export default function App() {
   const [engineState, setEngineState] = useState<EngineState>('diagnose');
   const [waveState, setWaveState] = useState<WaveState>('idle');
   const [input, setInput] = useState('');
-  const [submittedInput, setSubmittedInput] = useState('');
-  const [activeStage, setActiveStage] = useState<AdoptStage>('DESIRE');
+  const [activeStage, setActiveStage] = useState<AdoptStage>('PROFICIENT');
   const [dynamicData, setDynamicData] = useState<Record<AdoptStage, Diagnosis>>(fallbackDiagnoses);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [generated, setGenerated] = useState<number | null>(null);
@@ -218,7 +223,6 @@ export default function App() {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
-    setSubmittedInput(textToAnalyze);
     setWaveState('submitting');
     setEngineState('analyzing');
     setPhaseIndex(0);
@@ -231,6 +235,7 @@ export default function App() {
         confidence: aiResult.confidence,
         behavioralPattern: aiResult.behavioralPattern,
         psychologicalDriver: aiResult.psychologicalDriver,
+        strategicPrescription: aiResult.strategicPrescription,
         diagnosis: aiResult.problemSummary,
         signals: aiResult.signals,
         interventions: aiResult.interventions,
@@ -396,13 +401,20 @@ export default function App() {
             </button>
           </div>
 
-          {/* User Signal Echo Bar */}
-          {submittedInput && (
-            <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-              <span className="font-mono uppercase tracking-wider text-slate-400">Context Analyzed:</span>
-              <span className="font-medium text-slate-800 truncate ml-3 flex-1">"{submittedInput}"</span>
+          {/* AI Strategic Prescription Banner */}
+          <div style={{ margin: '0 0 2rem 0', padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(99, 102, 241, 0.08))', border: '1px solid rgba(99, 102, 241, 0.25)', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+            <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+              <Sparkles size={16} />
             </div>
-          )}
+            <div>
+              <div style={{ fontSize: '0.7rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4f46e5', fontWeight: 600, marginBottom: '0.25rem' }}>
+                AI Strategic Direction • {stages.find((s) => s.key === activeStage)?.label} Playbook
+              </div>
+              <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 500, color: '#1e293b', lineHeight: 1.6 }}>
+                {diagnosis.strategicPrescription || diagnosis.takeaway}
+              </p>
+            </div>
+          </div>
 
           <div className="stage-nav" role="tablist" aria-label="Adoption stages">
             {stages.map((stage) => (
@@ -498,7 +510,7 @@ export default function App() {
                   </span>
                   <span>
                     <small>Expected outcome</small>
-                    <strong>Proven ROI & Lift</strong>
+                    <strong>Accelerated Lift</strong>
                   </span>
                 </div>
               </article>
@@ -530,7 +542,7 @@ export default function App() {
                   <h4>{intervention.title}</h4>
                   <p>
                     {generated === index
-                      ? `Generated concept for ${intervention.title}: Implementation blueprint reducing friction with direct before/after proofs.`
+                      ? `Generated blueprint for ${intervention.title}: Interaction pattern reducing cognitive friction with direct contextual defaults.`
                       : intervention.description}
                   </p>
                   <div className="intervention-card__footer">
@@ -555,7 +567,7 @@ export default function App() {
                   </div>
                   {generated === index && (
                     <div className="concept-note">
-                      <Sparkles size={14} /> Interaction model ready · expected conversion lift +24%
+                      <Sparkles size={14} /> Interaction model ready · expected stage lift +22%
                     </div>
                   )}
                 </article>
