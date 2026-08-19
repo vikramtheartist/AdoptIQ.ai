@@ -660,7 +660,44 @@ CRITICAL RULES:
             </div>
 
             {/* Row 2: Tab Navigation Buttons */}
-            <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ marginTop: '0' }}>
+            {/* TWO-ROW STAGE NAVIGATION & RED PILL BADGE */}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem', marginTop: '1rem' }}>
+            
+            {/* Row 1: Floating Red Pills Grid */}
+            <div style={{ display: 'flex', width: '100%', height: '32px' }}>
+              {stages.map((stage) => (
+                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+                  {activeStage === stage.key && (
+                    <div 
+                      style={{
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        border: '1px solid #fca5a5',
+                        padding: '0.3rem 0.75rem',
+                        borderRadius: '999px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
+                        zIndex: 9999,
+                        transform: 'translateY(10px)' // Pushes it down slightly so it hovers right above the button
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
+                        <span style={{ fontSize: '11px', lineHeight: 1, color: '#dc2626', fontWeight: 'bold' }}>×</span>
+                      </div>
+                      RECOMMENDED FOCUS
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Row 2: Tab Navigation Buttons */}
+            <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
               {stages.map((stage) => (
                 <button
                   key={stage.key}
@@ -676,6 +713,7 @@ CRITICAL RULES:
                 </button>
               ))}
             </div>
+            
           </div>
 
           <div className="results-grid">
