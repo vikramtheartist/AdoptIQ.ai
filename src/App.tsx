@@ -619,21 +619,56 @@ CRITICAL CLASSIFICATION RULE:
             </div>
           </div>
 
-          <div className="stage-nav" role="tablist" aria-label="Adoption stages">
-            {stages.map((stage) => (
-              <button
-                key={stage.key}
-                role="tab"
-                aria-selected={activeStage === stage.key}
-                className={activeStage === stage.key ? 'is-active' : ''}
-                onClick={() => {
-                  setActiveStage(stage.key);
-                  setGenerated(null);
-                }}
-              >
-                {stage.label}
-              </button>
-            ))}
+          <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ paddingTop: '2rem', display: 'flex', gap: '0.5rem' }}>
+            {stages.map((stage) => {
+              const isActive = activeStage === stage.key;
+              return (
+                <div key={stage.key} style={{ position: 'relative', flex: 1, display: 'flex' }}>
+                  {isActive && (
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: '-1.8rem',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#fef2f2', // Soft red background matching your reference
+                        color: '#dc2626', // Dark red text
+                        border: '1px solid #fecaca', // Subtle red border
+                        padding: '0.25rem 0.6rem',
+                        borderRadius: '999px',
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)',
+                        zIndex: 10,
+                        animation: 'fadeInDown 0.3s ease-out'
+                      }}
+                    >
+                      {/* Inner red dot / cross icon representation */}
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '12px', height: '12px', borderRadius: '50%', border: '1px solid #dc2626' }}>
+                        <span style={{ fontSize: '10px', lineHeight: 1, color: '#dc2626', marginTop: '-1px' }}>×</span>
+                      </span>
+                      RECOMMENDED FOCUS
+                    </div>
+                  )}
+                  <button
+                    role="tab"
+                    style={{ width: '100%' }}
+                    aria-selected={isActive}
+                    className={isActive ? 'is-active' : ''}
+                    onClick={() => {
+                      setActiveStage(stage.key);
+                      setGenerated(null);
+                    }}
+                  >
+                    {stage.label}
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           <div className="results-grid">
