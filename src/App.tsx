@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown, Activity, Zap } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown, Activity, Zap, Compass } from 'lucide-react';
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 
 type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
@@ -20,10 +20,10 @@ type Diagnosis = {
   confidence: number;
   behavioralPattern: string;
   psychologicalDriver: string;
-  strategicPrescription: string;
+  aiSummary: string;
+  stageFocusPrescription: string;
   metricAtRisk: string;
   expectedLift: string;
-  diagnosis: string;
   signals: { label: string; detail: string; tone: 'coral' | 'blue' | 'lavender' }[];
   interventions: Intervention[];
   takeaway: string;
@@ -31,9 +31,9 @@ type Diagnosis = {
 
 const stages: { key: AdoptStage; label: string; definition: string; funnelIndex: string }[] = [
   { key: 'AWARE', label: 'Aware', definition: 'Know about product / community', funnelIndex: '01 / AWARE' },
-  { key: 'DESIRE', label: 'Desire', definition: 'Ignite Interest to explore', funnelIndex: '02 / DESIRE' },
+  { key: 'DESIRE', label: 'Desire', definition: 'Ignite interest to explore', funnelIndex: '02 / DESIRE' },
   { key: 'OPEN', label: 'Open', definition: 'Start getting value', funnelIndex: '03 / OPEN' },
-  { key: 'PROFICIENT', label: 'Proficient', definition: 'Engage in the community / workflow', funnelIndex: '04 / PROFICIENT' },
+  { key: 'PROFICIENT', label: 'Proficient', definition: 'Engage in the community & workflows', funnelIndex: '04 / PROFICIENT' },
   { key: 'TRANSFORM', label: 'Transform', definition: 'Pillar for the community', funnelIndex: '05 / TRANSFORM' },
 ];
 
@@ -42,12 +42,12 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     stageLabel: 'Awareness Breakdown',
     stageSubtext: 'Know about product & community',
     confidence: 88,
-    behavioralPattern: 'Invisible value',
-    psychologicalDriver: 'Attentional blindness',
-    metricAtRisk: 'Feature exposure rate (< 5%)',
+    behavioralPattern: 'Invisible Value',
+    psychologicalDriver: 'Attentional Blindness',
+    aiSummary: 'Users are actively working in parallel tools without encountering entry points or discovering the solution. To drive discovery, place clear in-app cues directly within their active daily surfaces.',
+    stageFocusPrescription: 'Focus on the Aware stage by launching multi-channel discovery touchpoints, non-intrusive in-product banners, and leadership endorsements to enter the user consideration set.',
+    metricAtRisk: 'Feature Exposure Rate (< 5%)',
     expectedLift: '+35% Reach & Exploration',
-    strategicPrescription: 'Leverage multi-channel touchpoints where users already work: deploy non-intrusive in-app banners, segmented email alerts, and leadership announcements.',
-    diagnosis: 'Users are not encountering the capability at moments of relevant need, preventing them from knowing the community/solution exists.',
     signals: [
       { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent active sessions.', tone: 'coral' },
       { label: 'Low navigation reach', detail: 'Users rarely enter or stumble upon the feature surface.', tone: 'blue' },
@@ -55,82 +55,81 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     ],
     interventions: [
       { title: 'In-Product Banners', description: 'Non-intrusive banners placed directly within relevant applications and active workflows.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Email Marketing Campaigns', description: 'Segmented campaigns with personalized subject lines highlighting benefits and new features.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Email Marketing Campaigns', description: 'Segmented campaigns highlighting immediate value and newly launched capabilities.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Leadership Communications', description: 'Top-down announcements and endorsements from organizational leaders to establish priority.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating quick wins on internal platforms and community hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating fast tactical wins on internal hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
-    takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already are.',
+    takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already work.',
   },
   DESIRE: {
     stageLabel: 'Interest & Motivation Breakdown',
-    stageSubtext: 'Ignite Interest to explore',
+    stageSubtext: 'Ignite interest to explore',
     confidence: 86,
-    behavioralPattern: 'Value ambiguity',
-    psychologicalDriver: 'Unclear reward vs effort',
+    behavioralPattern: 'Value Ambiguity',
+    psychologicalDriver: 'Unclear Reward vs Friction',
+    aiSummary: 'Visitors recognize the product exists but fail to see concrete ROI or tangible time savings, preventing trial intent. To convert interest, shift copy from abstract features to measurable before/after outcomes.',
+    stageFocusPrescription: 'Focus on the Desire stage by implementing interactive ROI calculators, side-by-side manual vs automated comparisons, and zero-friction sandbox previews.',
     metricAtRisk: 'Landing-to-Trial Conversion (< 2%)',
     expectedLift: '+28% Trial Start Lift',
-    strategicPrescription: 'Focus on benefits over features: embed side-by-side workflow comparisons, quantified ROI calculators, and interactive demos above the fold.',
-    diagnosis: 'Users are aware the solution exists, but lack the compelling interest or perceived ROI needed to take the leap and explore it.',
     signals: [
       { label: 'High awareness, low trial intent', detail: 'Page visits fail to translate into active evaluation.', tone: 'coral' },
-      { label: 'Abstract value perception', detail: 'Users cannot anticipate a concrete workflow win from the copy.', tone: 'blue' },
+      { label: 'Abstract value perception', detail: 'Users cannot anticipate a concrete workflow win from the messaging.', tone: 'blue' },
       { label: 'Drop-off before trial exploration', detail: 'Evaluation intent fades before the first setup action.', tone: 'lavender' },
     ],
     interventions: [
       { title: 'Dedicated Value Landing Page', description: 'Clearly explain community benefits, member stories, and use cases to spark interest.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Take a Tour Sliders', description: 'Guided walkthroughs highlighting unique benefits tailored to specific user roles.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Benefit-Oriented Messaging', description: 'Action-driven messages focusing on how the product helps users complete tasks.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Benefit-Oriented Messaging', description: 'Action-driven messages focusing on how the product completes jobs-to-be-done.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Interactive Demos & Simulations', description: 'Hands-on, low-risk sandbox experiences allowing exploration without sign-up friction.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'User Testimonials & Case Studies', description: 'Short, relatable stories from early users demonstrating real impact on their work.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-      { title: 'Interactive Demos & Simulations', description: 'Hands-on, low-risk sandbox experiences allowing exploration without friction.', impact: 'High', effort: 'Medium', priority: 'P0' },
     ],
     takeaway: 'Focus on benefits, not just features. Show, don’t just tell. Appeal to their immediate needs and aspirations.',
   },
   OPEN: {
-    stageLabel: 'First-Value Breakdown',
+    stageLabel: 'Activation & First-Run Breakdown',
     stageSubtext: 'Start getting value',
     confidence: 89,
-    behavioralPattern: 'Blank-canvas paralysis',
-    psychologicalDriver: 'Cognitive overload at setup',
+    behavioralPattern: 'Blank-Canvas Paralysis',
+    psychologicalDriver: 'Cognitive Overload at Setup',
+    aiSummary: 'Users initiate onboarding but abandon before completing their first workflow due to setup friction and blank-canvas paralysis. To drive activation, pre-fill workspaces with contextual templates and 1-click defaults.',
+    stageFocusPrescription: 'Focus on the Open stage by providing structured First Run Experiences (FRE), SSO pre-configurations, and real-time AI onboarding bots to ensure fast time-to-first-value.',
     metricAtRisk: 'Time-to-First-Value (> 45s)',
     expectedLift: '+42% Completed First Runs',
-    strategicPrescription: 'Simplify pathways to first gratification: implement First Run Experiences (FRE), pre-configuration SSO, and contextual AI onboarding bots.',
-    diagnosis: 'Users enter the product to start getting value, but friction in onboarding and setup prevents them from experiencing immediate gratification.',
     signals: [
       { label: '42% activation rate drop-off', detail: 'Measured between initial entry and first meaningful value event.', tone: 'coral' },
       { label: 'Time-to-first-value > 45s', detail: 'Exceeds expected baseline threshold by 30 seconds.', tone: 'blue' },
       { label: 'Erratic cursor movement', detail: 'Detected hovering and stalls over blank setup screens.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks to navigate key features.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Quick Start Guides / Cheat Sheets', description: 'Printable, easy-to-follow instructions for common first-run tasks.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks into intuitive sub-actions.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'AI-Powered Onboarding Bots', description: 'Smart assistants answering setup questions and guiding users in real time.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Single Sign-On (SSO) & Pre-configuration', description: 'Fast setup with pre-filled user data and 1-click workspace entry.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Quick Start Guides / Cheat Sheets', description: 'Printable, easy-to-follow instructions for common first-run tasks.', impact: 'Medium', effort: 'Low', priority: 'P1' },
       { title: 'In-Product Help & Contextual Tooltips', description: 'On-screen tips explaining features right at the moment of need.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Simplicity, clarity, and immediate gratification. Reduce cognitive load and provide clear default pathways.',
   },
   PROFICIENT: {
-    stageLabel: 'Engagement & Habit Breakdown',
+    stageLabel: 'Habituation & Mastery Breakdown',
     stageSubtext: 'Engage in the community / workflow',
     confidence: 94,
-    behavioralPattern: 'Habit interruption',
-    psychologicalDriver: 'High operational friction',
+    behavioralPattern: 'Habit Interruption',
+    psychologicalDriver: 'High Operational Friction',
+    aiSummary: 'Organizations easily achieve pilot activation but stall before operational integration due to fragmented, ad-hoc experimentation. To scale, embed standardized, one-click routines directly inside existing core tools rather than relying on standalone surfaces.',
+    stageFocusPrescription: 'Focus entirely on the Proficient stage by replacing open-ended prompt bars with role-specific templates, zero-context-switching inline workflows, and automated task support to convert sporadic testing into daily habits.',
     metricAtRisk: 'Week-2 Habit Retention (-68%)',
     expectedLift: '+31% Habitual Engagement',
-    strategicPrescription: 'Reinforce repeatable routines: deploy automated task support, in-app peer Q&A communities, and personalized learning paths.',
-    diagnosis: 'Users try the workflow once but revert to manual routines because multi-step rules and complex syntax prevent repeatable habit formation.',
     signals: [
       { label: 'Reverted to manual clicks', detail: 'Drop-off caused by complex, slow, or multi-step execution friction.', tone: 'coral' },
-      { label: 'Week-two retention drop-off', detail: 'Repeat behavior is failing to form after first session.', tone: 'blue' },
-      { label: 'Workflow fragmentation', detail: 'Users exit to manual tools due to missing task support.', tone: 'lavender' },
+      { label: 'Week-two retention drop-off', detail: 'Repeat behavior is failing to form after initial sessions.', tone: 'blue' },
+      { label: 'Workflow fragmentation', detail: 'Users exit to legacy manual tools due to missing task support.', tone: 'lavender' },
     ],
     interventions: [
       { title: 'Automated Task Support', description: 'Copilot suggests shortcuts, templates, or automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Advanced In-Depth Tutorials', description: 'Targeted sessions covering advanced features, tips, and operational best practices.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-      { title: 'User Forums & Peer Communities', description: 'Spaces for peer learning and continuous Q&A (e.g. community adoption channels).', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Searchable Knowledge Base & FAQs', description: 'Self-help articles for fast answers to prevent workflow interruptions.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-      { title: 'In-App Surveys & Feedback Prompts', description: 'Quick mechanisms to gather friction feedback and address pain points.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'User Forums & Peer Communities', description: 'Spaces for peer learning and continuous Q&A on Viva Engage or internal hubs.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Personalized Learning Paths', description: 'Suggested mastery challenges and content tailored to user role or activity.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'In-App Surveys & Feedback Prompts', description: 'Quick mechanisms to gather friction feedback and address pain points.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
   },
@@ -138,12 +137,12 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     stageLabel: 'Advocacy & Scaling Breakdown',
     stageSubtext: 'Pillar for the community',
     confidence: 92,
-    behavioralPattern: 'Unshared expertise',
-    psychologicalDriver: 'Low social leverage',
+    behavioralPattern: 'Unshared Expertise',
+    psychologicalDriver: 'Low Social & Network Leverage',
+    aiSummary: 'Power users develop highly productive behaviors, but expertise remains isolated within individual silos without organic viral spread. To scale, build communal showcase libraries and formal recognition loops.',
+    stageFocusPrescription: 'Focus on the Transform stage by creating formal Champions Programs, peer-driven template libraries, and public executive spotlights to turn isolated power users into organizational evangelists.',
     metricAtRisk: 'Internal Viral Expansion (< 1.1x)',
     expectedLift: '+48% Organic Peer Advocacy',
-    strategicPrescription: 'Turn power users into evangelists: establish Champions Programs, public recognition rewards, and user-led success story spotlights.',
-    diagnosis: 'Power users have mastered the capability, but the product lacks mechanisms to empower them as community pillars and scale expertise.',
     signals: [
       { label: 'Power users are isolated', detail: 'Successful patterns stay siloed within individual accounts.', tone: 'coral' },
       { label: 'Few shared workflows', detail: 'Teams cannot see, replicate, or reuse proven patterns.', tone: 'blue' },
@@ -152,28 +151,26 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     interventions: [
       { title: 'Champions Programs', description: 'Empower power users to lead, mentor, and advocate for the product across the org.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'User-Led Success Stories', description: 'Encourage users to share real impact through video clips and internal showcase posts.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Idea Submission Feedback Loop', description: 'Structured channels for champions to suggest new features and improvements.', impact: 'Medium', effort: 'Low', priority: 'P1' },
       { title: 'Community Spotlights', description: 'Highlight top contributors and innovators to inspire peer adoption.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Community-Driven Content & Templates', description: 'Allow expert users to share their own tutorials, templates, and blueprints.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Recognition & Rewards', description: 'Publicly celebrate top contributors and champions with badges and leadership perks.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Copilot-Generated Impact Reports', description: 'Summarize user contributions and usage highlights for team-wide sharing.', impact: 'High', effort: 'Medium', priority: 'P0' },
     ],
     takeaway: 'Recognize power users, encourage sharing, and facilitate organic growth. Turn users into evangelists.',
   },
 };
 
 const suggestions = [
-  { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because the ROI and concrete benefits are ambiguous.', stage: 'DESIRE' as AdoptStage },
-  { text: 'Teams try the new automation rules once, but revert to manual clicks because they found the multi-step rules slow, hard, and lacking automated task support.', stage: 'PROFICIENT' as AdoptStage },
-  { text: 'Feature discovery is under 5%', stage: 'AWARE' as AdoptStage },
+  { text: '80% of organizations are experimenting with AI, but only 6 percent successfully scale it into daily workflows.', stage: 'PROFICIENT' as AdoptStage },
+  { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because ROI is ambiguous.', stage: 'DESIRE' as AdoptStage },
+  { text: 'Users complete onboarding once, but revert to manual spreadsheets because multi-step rules are slow and hard.', stage: 'PROFICIENT' as AdoptStage },
 ];
 
 const analysisPhases = [
   'Synthesizing problem context',
-  'Mapping ADOPT stage barrier',
-  'Quantifying evidence telemetry',
-  'Customizing intervention blueprints',
-  'Finalizing strategic playbook',
+  'Consulting ADOPT Behavioral Model',
+  'Quantifying metric drop-offs',
+  'Mapping targeted initiatives',
+  'Finalizing strategic counselor playbook',
 ];
 
 function SignalWave({ state, activity }: { state: WaveState; activity: number }) {
@@ -232,12 +229,14 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
-  // Strict Stage Prioritization
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
 
-    // 1. PROFICIENT: Operational friction & habit formation drop-offs take top priority
+    // 1. PROFICIENT: Scaling experimentation into daily workflows, habit drop-offs, slow/hard friction
     if (
+      q.includes('scale it into daily') ||
+      q.includes('daily workflow') ||
+      q.includes('experimenting') ||
       q.includes('shortcut') ||
       q.includes('syntax') ||
       q.includes('rule') ||
@@ -248,15 +247,13 @@ export default function App() {
       q.includes('manual') ||
       q.includes('revert') ||
       q.includes('retention') ||
-      q.includes('once') ||
-      q.includes('repeat') ||
       q.includes('task support') ||
       q.includes('proficient')
     ) {
       return 'PROFICIENT';
     }
 
-    // 2. TRANSFORM: Scaling expertise, champion advocacy, community templates
+    // 2. TRANSFORM: Scaling community champions, organizational advocacy
     if (
       q.includes('champion') ||
       q.includes('advoca') ||
@@ -264,8 +261,7 @@ export default function App() {
       q.includes('pillar') ||
       q.includes('transform') ||
       q.includes('spotlight') ||
-      (q.includes('share') && q.includes('team')) ||
-      q.includes('scale across')
+      (q.includes('share') && q.includes('team'))
     ) {
       return 'TRANSFORM';
     }
@@ -293,8 +289,7 @@ export default function App() {
       q.includes('find') ||
       q.includes('visibility') ||
       q.includes('banner') ||
-      q.includes('exposure') ||
-      q.includes('know about')
+      q.includes('exposure')
     ) {
       return 'AWARE';
     }
@@ -314,7 +309,6 @@ export default function App() {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
-    // Determine deterministic stage
     const detectedStage = classifyInput(textToAnalyze);
     setActiveStage(detectedStage);
 
@@ -322,22 +316,23 @@ export default function App() {
     setEngineState('analyzing');
     setPhaseIndex(0);
 
-    // Call Gemini with the complete ADOPT Framework prompt
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `
-You are the ADOPT Intelligence Engine, mapping product adoption problems to the 5 ADOPT stages:
-1. AWARE ("Know about community / product"): Feature discovery, exposure, awareness, banners, announcements.
-2. DESIRE ("Ignite Interest to explore"): Value clarity, motivation, ROI calculation, trial conversion, landing pages, interactive demos.
-3. OPEN ("Start getting value"): Activation, first-run experiences (FRE), guided tours, AI onboarding bots, SSO pre-configuration.
-4. PROFICIENT ("Engage in the community / workflow"): Habit formation, automated task support, advanced tutorials, forums/communities, personalized learning paths, week-2 retention.
-5. TRANSFORM ("Pillar for the community"): Champions programs, user-led success stories, community spotlights, recognition & rewards, organic scaling.
+You are the ADOPT Senior Behavioral Intelligence Counselor.
+Your role is to diagnose user adoption roadmaps, friction points, or telemetry and synthesize them into the standard ADOPT framework:
+- AWARE: Know about product/community (Banners, segmented email, leadership comms, micro-videos).
+- DESIRE: Ignite interest to explore (Landing page value, interactive ROI calculators, tour sliders, interactive sandbox demos).
+- OPEN: Start getting value (First-Run Experiences, guided tours, AI onboarding bots, SSO pre-configuration).
+- PROFICIENT: Engage in community / daily workflows (Habit integration, automated task support, advanced tutorials, peer forums, learning paths).
+- TRANSFORM: Pillar for the community (Champions programs, user-led success stories, community spotlights, recognition & rewards).
 
-CRITICAL CLASSIFICATION RULE:
-- If users/teams try something once, find rules hard/slow, revert to manual clicks, or lack automated task support, you MUST return stage = "PROFICIENT". Do NOT classify as TRANSFORM simply because "teams" or "users" is in the prompt.
-- Provide strategicPrescription as exactly 2 crisp, actionable sentences detailing what UX/product interventions to build.
+CRITICAL CONSULTING OUTPUT FORMAT:
+1. aiSummary: Exactly 2 to 3 sentences summarizing the root behavioral roadblock and immediate strategic direction (e.g. "Organizations easily achieve pilot activation but stall before operational integration due to fragmented, ad-hoc experimentation. To scale, embed standardized, one-click routines directly inside existing core tools rather than relying on standalone chat apps.").
+2. stageFocusPrescription: Exactly 1 to 2 sentences starting with "Focus on the [Stage Name] stage by..." detailing the exact UX/process shifts.
+3. Classify "scaling experiments into daily workflows", "complex multi-step rules", or "reverting to manual habits" strictly as "PROFICIENT".
 `;
         const responseSchema: Schema = {
           type: Type.OBJECT,
@@ -348,10 +343,10 @@ CRITICAL CLASSIFICATION RULE:
             confidence: { type: Type.INTEGER },
             behavioralPattern: { type: Type.STRING },
             psychologicalDriver: { type: Type.STRING },
-            strategicPrescription: { type: Type.STRING },
+            aiSummary: { type: Type.STRING },
+            stageFocusPrescription: { type: Type.STRING },
             metricAtRisk: { type: Type.STRING },
             expectedLift: { type: Type.STRING },
-            diagnosis: { type: Type.STRING },
             takeaway: { type: Type.STRING },
             signals: {
               type: Type.ARRAY,
@@ -387,10 +382,10 @@ CRITICAL CLASSIFICATION RULE:
             'confidence',
             'behavioralPattern',
             'psychologicalDriver',
-            'strategicPrescription',
+            'aiSummary',
+            'stageFocusPrescription',
             'metricAtRisk',
             'expectedLift',
-            'diagnosis',
             'takeaway',
             'signals',
             'interventions',
@@ -446,7 +441,7 @@ CRITICAL CLASSIFICATION RULE:
         </div>
         <div className="topbar__right">
           <span className="topbar__status">
-            <span className="status-dot" /> ADOPT Framework Online
+            <span className="status-dot" /> ADOPT Counselor Online
           </span>
           <span className="topbar__divider" />
           <span className="topbar__edition">Behavioral intelligence / 01</span>
@@ -493,7 +488,7 @@ CRITICAL CLASSIFICATION RULE:
           </div>
 
           <p className="hero-description">
-            Describe a friction point, user feedback, or telemetry drop-off. The ADOPT Engine maps it across the 5 behavioral stages and generates targeted initiatives.
+            Describe a friction point, telemetry drop-off, or adoption use case. The ADOPT Engine will synthesize an AI summary and focus your initiatives across the 5 behavioral stages.
           </p>
 
           <div className="suggestions" aria-label="Suggested problems">
@@ -548,18 +543,36 @@ CRITICAL CLASSIFICATION RULE:
             </button>
           </div>
 
-          {/* AI Strategic Prescription Banner */}
-          <div style={{ margin: '0 0 2rem 0', padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(99, 102, 241, 0.08))', border: '1px solid rgba(99, 102, 241, 0.25)', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-            <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-              <Sparkles size={16} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.7rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4f46e5', fontWeight: 600, marginBottom: '0.25rem' }}>
-                AI Strategic Direction • {currentStageInfo.label} Playbook ({currentStageInfo.definition})
+          {/* TWO-TIER COUNSELOR PRESCRIPTION BLOCK */}
+          <div style={{ margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {/* 1) AI Summary & Recommendation */}
+            <div style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.07), rgba(168, 85, 247, 0.05))', border: '1px solid rgba(99, 102, 241, 0.22)', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{ width: '2.2rem', height: '2.2rem', borderRadius: '0.6rem', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                <Sparkles size={18} />
               </div>
-              <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 500, color: '#1e293b', lineHeight: 1.6 }}>
-                {diagnosis.strategicPrescription || diagnosis.takeaway}
-              </p>
+              <div>
+                <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#4f46e5', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  1) AI Summary & Recommendation
+                </div>
+                <p style={{ margin: 0, fontSize: '0.94rem', fontWeight: 500, color: '#1e293b', lineHeight: 1.6 }}>
+                  {diagnosis.aiSummary}
+                </p>
+              </div>
+            </div>
+
+            {/* 2) ADOPT Stage Focus */}
+            <div style={{ padding: '1.1rem 1.5rem', borderRadius: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{ width: '2.2rem', height: '2.2rem', borderRadius: '0.6rem', background: '#334155', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                <Compass size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#475569', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  2) ADOPT Stage Focus: {currentStageInfo.label} ({currentStageInfo.definition})
+                </div>
+                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: '#334155', lineHeight: 1.55 }}>
+                  {diagnosis.stageFocusPrescription}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -600,7 +613,7 @@ CRITICAL CLASSIFICATION RULE:
                       {diagnosis.stageLabel}
                     </h3>
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'monospace' }}>
-                      State: <strong style={{ color: '#e2e8f0', fontWeight: 600 }}>{currentStageInfo.definition}</strong>
+                      Stage Goal: <strong style={{ color: '#e2e8f0', fontWeight: 600 }}>{currentStageInfo.definition}</strong>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -612,7 +625,7 @@ CRITICAL CLASSIFICATION RULE:
                 </div>
 
                 <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.55, margin: '0 0 1.25rem 0', fontWeight: 400 }}>
-                  {diagnosis.diagnosis}
+                  {diagnosis.aiSummary}
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0.85rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
@@ -664,7 +677,7 @@ CRITICAL CLASSIFICATION RULE:
                 <div className="takeaway-grid">
                   <span><small>Behavioral bottleneck</small><strong>{stages.find((stage) => stage.key === activeStage)?.label}</strong></span>
                   <span><small>Primary driver</small><strong>{diagnosis.psychologicalDriver}</strong></span>
-                  <span><small>Recommended move</small><strong>Deploy Initiatives</strong></span>
+                  <span><small>Recommended move</small><strong>Execute Initiatives</strong></span>
                   <span><small>Expected outcome</small><strong>Accelerated Adoption</strong></span>
                 </div>
               </article>
@@ -679,7 +692,7 @@ CRITICAL CLASSIFICATION RULE:
                 <span className="intervention-count">{diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves</span>
               </div>
               <p className="intervention-intro reveal reveal--one">
-                Proven ADOPT framework initiatives to move users from {currentStageInfo.label} to the next behavioral milestone.
+                High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).
               </p>
               {diagnosis.interventions.map((intervention, index) => (
                 <article className={`intervention-card reveal reveal--${index + 2}`} key={intervention.title}>
