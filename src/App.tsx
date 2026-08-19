@@ -228,11 +228,8 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
-  // Semantic heuristic fallback grounded strictly in ADOPT documentation
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
-
-    // 1. PROFICIENT
     if (
       q.includes('skill') || q.includes('literacy') || q.includes('prompt') ||
       q.includes('confidence') || q.includes('output') || q.includes('daily workflow') ||
@@ -243,21 +240,18 @@ export default function App() {
       q.includes('proficient')
     ) return 'PROFICIENT';
 
-    // 2. TRANSFORM
     if (
       q.includes('champion') || q.includes('advoca') || q.includes('mentor') ||
       q.includes('pillar') || q.includes('transform') || q.includes('spotlight') ||
       (q.includes('share') && q.includes('team')) || q.includes('scale across')
     ) return 'TRANSFORM';
 
-    // 3. DESIRE
     if (
       q.includes('why') || q.includes('roi') || q.includes('value') ||
       q.includes('benefit') || q.includes('landing') || q.includes('trial') ||
       q.includes('convert') || q.includes('ignite') || q.includes('desire')
     ) return 'DESIRE';
 
-    // 4. AWARE
     if (
       q.includes('discover') || q.includes('aware') || q.includes('5%') ||
       q.includes('find') || q.includes('visibility') || q.includes('banner') ||
@@ -279,7 +273,6 @@ export default function App() {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
-    // Set immediate heuristic
     const detectedStage = classifyInput(textToAnalyze);
     setActiveStage(detectedStage);
 
@@ -294,21 +287,17 @@ export default function App() {
         
         const systemInstruction = `
 You are the ADOPT Senior Behavioral Intelligence Counselor.
-Your role is to diagnose user adoption roadmaps and synthesize them into the ADOPT behavioral framework. 
-Remember: Adoption is a human behavior problem, not just a UX problem, driven by status quo bias and loss aversion.
-
 Map the input to the exact 5 ADOPT stages:
-1. AWARE ("Know about community"): Ringing the Jingle. Broadcast existence. Tactics: In-Product Banners, Segmented Email, Leadership Comms, Micro-Content/Short-Form Video. Metric: Reach, CTR.
-2. DESIRE ("Ignite Interest to explore"): Showing the Scoop. Build emotional hook. Tactics: Landing page, Take a tour sliders, Benefit-Oriented Messaging, User Testimonials, Interactive Demos. Metric: Demo signups, Clicks.
-3. OPEN ("Start getting value"): The Starter Sundae. Remove first-use friction/blank-canvas paralysis. Tactics: FRE & Guided Tours, Quick Start Guides, AI Onboarding Bots, SSO, Contextual Help. Metric: Onboarding completion, First-time usage.
-4. PROFICIENT ("Engage in the community"): The Recipe Card. Enable skill-building, habit formation, prompt literacy, scaling into daily workflows. Tactics: Automated Task Support, Advanced Tutorials, User Forums, Knowledge Base, Learning Paths. Metric: Feature adoption, Session frequency.
-5. TRANSFORM ("Pillar for the community"): The Community Franchise. Scale advocacy. Tactics: Champions Programs, User-Led Success Stories, Idea Submission, Community Spotlights, Recognition & Rewards, Leadership Analytics Dashboards. Metric: Referrals, Contributions.
+1. AWARE ("Know about community")
+2. DESIRE ("Ignite Interest to explore")
+3. OPEN ("Start getting value")
+4. PROFICIENT ("Engage in the community")
+5. TRANSFORM ("Pillar for the community")
 
 CRITICAL RULES:
 - If the input involves "skills gap", "prompting literacy", "scaling into daily workflows", or "reverting to manual clicks", you MUST classify as "PROFICIENT". Do NOT classify as TRANSFORM unless the core problem is power users lacking sharing mechanisms.
-- aiSummary MUST be 2-3 sentences. It must diagnose the root behavioral roadblock (e.g., status quo bias, cognitive overload).
+- aiSummary MUST be 2-3 sentences diagnosing the root behavioral roadblock (e.g., status quo bias, cognitive overload).
 - stageFocusPrescription MUST be 1-2 sentences starting with "Focus on the [Stage] stage by..." and detail the exact UX shifts aligned to that stage.
-- interventions MUST exclusively use the tactics defined in the stage descriptions above.
 `;
         const responseSchema: Schema = {
           type: Type.OBJECT,
@@ -396,6 +385,44 @@ CRITICAL RULES:
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
+      {/* Hidden Style block prevents Flex layout gaps while enabling Siri animation */}
+      <div style={{ display: 'none' }}>
+        <style>
+          {`
+            @keyframes siriSpin {
+              0% { transform: rotate(0deg) scale(1); }
+              50% { transform: rotate(180deg) scale(1.15); }
+              100% { transform: rotate(360deg) scale(1); }
+            }
+            @keyframes pillPop {
+              0% { opacity: 0; transform: translate(-50%, 10px); }
+              100% { opacity: 1; transform: translate(-50%, -38px); }
+            }
+            .siri-mesh-bg {
+              position: absolute;
+              top: -50%;
+              left: -50%;
+              width: 200%;
+              height: 200%;
+              background: 
+                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
+                radial-gradient(circle at 30% 40%, rgba(217, 70, 239, 0.15), transparent 40%),
+                radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.15), transparent 40%);
+              animation: siriSpin 15s linear infinite;
+              z-index: 0;
+              pointer-events: none;
+            }
+            .stage-nav {
+              overflow: visible !important;
+            }
+            .stage-nav button {
+              position: relative;
+              overflow: visible !important;
+            }
+          `}
+        </style>
+      </div>
+
       <header className="topbar">
         <div className="brand-mark" aria-label="ADOPT Engine">
           <span className="brand-mark__shape" />
@@ -494,7 +521,7 @@ CRITICAL RULES:
       )}
 
       {engineState === 'results' && (
-        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '1rem' }}>
+        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '1.5rem' }}>
           <div className="results-heading">
             <div>
               <p className="eyebrow">DIAGNOSIS COMPLETE <span>·</span> SIGNAL RESOLVED</p>
@@ -505,7 +532,7 @@ CRITICAL RULES:
             </button>
           </div>
 
-          {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY (Single block now) */}
+          {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY */}
           <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '2.5rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
             <div className="siri-mesh-bg" />
             
@@ -526,42 +553,8 @@ CRITICAL RULES:
             </div>
           </div>
 
-          {/* TWO-ROW STAGE NAVIGATION & RED PILL BADGE */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', width: '100%', marginBottom: '0.4rem' }}>
-              {stages.map((stage) => (
-                <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minHeight: '24px' }}>
-                  {activeStage === stage.key && (
-                    <div 
-                      style={{
-                        background: '#fef2f2',
-                        color: '#dc2626',
-                        border: '1px solid #fca5a5',
-                        padding: '0.3rem 0.75rem',
-                        borderRadius: '999px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
-                        zIndex: 9999,
-                        transform: 'translateY(10px)',
-                        animation: 'fadeInDown 0.3s ease-out'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
-                        <span style={{ fontSize: '11px', lineHeight: 1, color: '#dc2626', fontWeight: 'bold' }}>×</span>
-                      </div>
-                      RECOMMENDED FOCUS
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
+          <div style={{ paddingTop: '2.5rem', paddingBottom: '1.5rem' }}>
+            <div className="stage-nav" role="tablist" aria-label="Adoption stages">
               {stages.map((stage) => (
                 <button
                   key={stage.key}
@@ -573,6 +566,36 @@ CRITICAL RULES:
                     setGenerated(null);
                   }}
                 >
+                  {/* RED PILL (Inside the button to prevent CSS Grid breaking) */}
+                  {activeStage === stage.key && (
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: '-38px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        border: '1px solid #fca5a5',
+                        padding: '0.3rem 0.75rem',
+                        borderRadius: '999px',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
+                        zIndex: 100,
+                        animation: 'pillPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
+                        <span style={{ fontSize: '11px', lineHeight: 1, color: '#dc2626', fontWeight: 'bold' }}>×</span>
+                      </div>
+                      RECOMMENDED FOCUS
+                    </div>
+                  )}
                   {stage.label}
                 </button>
               ))}
@@ -651,17 +674,6 @@ CRITICAL RULES:
                 </div>
                 <button className="telemetry-link">View raw telemetry logs <ArrowUpRight size={15} /></button>
               </article>
-
-              <article className="takeaway-card reveal reveal--three">
-                <div className="section-label">Executive Takeaway & Key Principles</div>
-                <p>“{diagnosis.takeaway}”</p>
-                <div className="takeaway-grid">
-                  <span><small>Behavioral bottleneck</small><strong>{stages.find((stage) => stage.key === activeStage)?.label}</strong></span>
-                  <span><small>Primary driver</small><strong>{diagnosis.psychologicalDriver}</strong></span>
-                  <span><small>Recommended move</small><strong>Execute Initiatives</strong></span>
-                  <span><small>Expected outcome</small><strong>Accelerated Adoption</strong></span>
-                </div>
-              </article>
             </div>
 
             <div className="interventions-column">
@@ -673,10 +685,10 @@ CRITICAL RULES:
                 <span className="intervention-count">{diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves</span>
               </div>
               
-              {/* MERGED INITIATIVE PRESCRIPTION BLOCK */}
-              <div className="intervention-intro reveal reveal--one" style={{ padding: '1rem 1.25rem', background: '#f8fafc', borderLeft: '4px solid #6366f1', borderRadius: '0 0.5rem 0.5rem 0', marginBottom: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                <p style={{ margin: 0, color: '#334155', fontSize: '0.92rem', lineHeight: 1.6 }}>
-                  <strong>High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).</strong> {diagnosis.stageFocusPrescription}
+              {/* MERGED PRESCRIPTION BLOCK */}
+              <div className="intervention-intro reveal reveal--one" style={{ padding: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', borderLeft: '4px solid #6366f1', borderRadius: '0 0.5rem 0.5rem 0', marginBottom: '1.5rem' }}>
+                <p style={{ margin: 0, color: '#1e293b', fontSize: '0.94rem', lineHeight: 1.6 }}>
+                  <strong style={{ color: '#4f46e5' }}>High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).</strong> {diagnosis.stageFocusPrescription}
                 </p>
               </div>
 
@@ -708,41 +720,6 @@ CRITICAL RULES:
           </div>
         </section>
       )}
-
-      <footer className="page-footer">
-        <span>ADOPT Framework Engine</span>
-        <span>Aware · Desire · Open · Proficient · Transform</span>
-        <span>© 2026</span>
-      </footer>
-
-      {/* Invisible Style Block Moved to the Bottom to Prevent Layout Shifts */}
-      <style>
-        {`
-          @keyframes siriSpin {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(1.15); }
-            100% { transform: rotate(360deg) scale(1); }
-          }
-          @keyframes fadeInDown {
-            0% { opacity: 0; transform: translateY(-5px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          .siri-mesh-bg {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-              radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
-              radial-gradient(circle at 30% 40%, rgba(217, 70, 239, 0.15), transparent 40%),
-              radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.15), transparent 40%);
-            animation: siriSpin 15s linear infinite;
-            z-index: 0;
-            pointer-events: none;
-          }
-        `}
-      </style>
     </main>
   );
 }
