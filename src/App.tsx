@@ -385,6 +385,7 @@ CRITICAL RULES:
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
+
       <header className="topbar">
         <div className="brand-mark" aria-label="ADOPT Engine">
           <span className="brand-mark__shape" />
@@ -483,7 +484,7 @@ CRITICAL RULES:
       )}
 
       {engineState === 'results' && (
-        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '1rem' }}>
+        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '1.5rem' }}>
           <div className="results-heading">
             <div>
               <p className="eyebrow">DIAGNOSIS COMPLETE <span>·</span> SIGNAL RESOLVED</p>
@@ -495,7 +496,7 @@ CRITICAL RULES:
           </div>
 
           {/* SIRI-STYLE GLASSMORPHIC AI SUMMARY */}
-          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
+          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1.5rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
             <div className="siri-mesh-bg" />
             
             <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.05)' }}>
@@ -515,55 +516,54 @@ CRITICAL RULES:
             </div>
           </div>
 
-          {/* STAGE NAVIGATION WITH PILL ANIMATING BELOW */}
-          <div style={{ paddingBottom: '2.5rem' }}>
-            <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ position: 'relative', margin: 0 }}>
-              {stages.map((stage) => (
-                <button
-                  key={stage.key}
-                  role="tab"
-                  aria-selected={activeStage === stage.key}
-                  className={activeStage === stage.key ? 'is-active' : ''}
-                  onClick={() => {
-                    setActiveStage(stage.key);
-                    setGenerated(null);
-                  }}
-                  style={{ position: 'relative' }}
-                >
-                  {stage.label}
-                  {/* RED PILL DROPPING DOWN BELOW THE BUTTON */}
-                  {activeStage === stage.key && (
-                    <div 
-                      style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 12px)',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#fef2f2',
-                        color: '#dc2626',
-                        border: '1px solid #fca5a5',
-                        padding: '0.3rem 0.75rem',
-                        borderRadius: '999px',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
-                        zIndex: 100,
-                        animation: 'pillPopDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
-                        <span style={{ fontSize: '11px', lineHeight: 1, color: '#dc2626', fontWeight: 'bold' }}>×</span>
-                      </div>
-                      RECOMMENDED FOCUS
+          {/* STAGE NAVIGATION BAR (Clean, no buttons modified) */}
+          <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
+            {stages.map((stage) => (
+              <button
+                key={stage.key}
+                role="tab"
+                aria-selected={activeStage === stage.key}
+                className={activeStage === stage.key ? 'is-active' : ''}
+                onClick={() => {
+                  setActiveStage(stage.key);
+                  setGenerated(null);
+                }}
+              >
+                {stage.label}
+              </button>
+            ))}
+          </div>
+
+          {/* RED PILL RENDERED EXPLICITLY BELOW THE NAVIGATION BAR TO PREVENT CSS CLIPPING */}
+          <div style={{ display: 'flex', width: '100%', marginTop: '0.5rem', marginBottom: '2.5rem' }}>
+            {stages.map((stage) => (
+              <div key={`badge-${stage.key}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '28px' }}>
+                {activeStage === stage.key && (
+                  <div 
+                    style={{
+                      background: '#fef2f2',
+                      color: '#dc2626',
+                      border: '1px solid #fca5a5',
+                      padding: '0.3rem 0.75rem',
+                      borderRadius: '999px',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
+                      animation: 'pillPopDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #dc2626' }}>
+                      <span style={{ fontSize: '11px', lineHeight: 1, color: '#dc2626', fontWeight: 'bold' }}>×</span>
                     </div>
-                  )}
-                </button>
-              ))}
-            </div>
+                    RECOMMENDED FOCUS
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           <div className="results-grid">
@@ -701,8 +701,8 @@ CRITICAL RULES:
               100% { transform: rotate(360deg) scale(1); }
             }
             @keyframes pillPopDown {
-              0% { opacity: 0; transform: translate(-50%, -10px); }
-              100% { opacity: 1; transform: translate(-50%, 0); }
+              0% { opacity: 0; transform: translateY(-5px); }
+              100% { opacity: 1; transform: translateY(0); }
             }
             .siri-mesh-bg {
               position: absolute;
@@ -717,13 +717,6 @@ CRITICAL RULES:
               animation: siriSpin 15s linear infinite;
               z-index: 0;
               pointer-events: none;
-            }
-            .stage-nav {
-              overflow: visible !important;
-            }
-            .stage-nav button {
-              position: relative;
-              overflow: visible !important;
             }
           `}
         </style>
