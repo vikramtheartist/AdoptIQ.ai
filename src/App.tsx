@@ -675,73 +675,73 @@ CRITICAL RULES:
 
           <div className="results-grid">
             <div className="results-left">
-              <article className="diagnosis-card reveal reveal--one" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: '#131722', color: '#f8fafc', border: '1px solid #232936' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#94a3b8', textTransform: 'uppercase' }}>
+              <article className="diagnosis-card reveal reveal--one" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', color: '#0f172a', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 32px -8px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#64748b', textTransform: 'uppercase' }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
                     PRIMARY DIAGNOSIS
                   </div>
-                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#818cf8', background: 'rgba(99, 102, 241, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#4f46e5', background: 'rgba(99, 102, 241, 0.1)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontWeight: 600 }}>
                     {currentStageInfo.funnelIndex}
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.4rem', fontWeight: 600, color: '#ffffff', margin: '0 0 0.25rem 0', letterSpacing: '-0.02em' }}>
+                    <h3 style={{ fontSize: '1.4rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem 0', letterSpacing: '-0.02em' }}>
                       {diagnosis.stageLabel}
                     </h3>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'monospace' }}>
-                      Stage Goal: <strong style={{ color: '#e2e8f0', fontWeight: 600 }}>{currentStageInfo.definition}</strong>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace' }}>
+                      Stage Goal: <strong style={{ color: '#334155', fontWeight: 600 }}>{currentStageInfo.definition}</strong>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#93c5fd', lineHeight: 1 }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#3b82f6', lineHeight: 1 }}>
                       {diagnosis.confidence}%
                     </div>
-                    <span style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', fontFamily: 'monospace' }}>Confidence</span>
+                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'monospace' }}>Confidence</span>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0.85rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0.85rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
                   <div>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.65rem', color: '#f87171', fontFamily: 'monospace', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.65rem', color: '#ef4444', fontFamily: 'monospace', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
                       <Activity size={12} /> Metric At Risk
                     </span>
-                    <strong style={{ fontSize: '0.82rem', color: '#ffffff', fontWeight: 600, display: 'block' }}>
+                    <strong style={{ fontSize: '0.82rem', color: '#0f172a', fontWeight: 600, display: 'block' }}>
                       {diagnosis.metricAtRisk}
                     </strong>
                   </div>
                   <div>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.65rem', color: '#34d399', fontFamily: 'monospace', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.65rem', color: '#10b981', fontFamily: 'monospace', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
                       <Zap size={12} /> Expected Lift
                     </span>
-                    <strong style={{ fontSize: '0.82rem', color: '#34d399', fontWeight: 600, display: 'block' }}>
+                    <strong style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 600, display: 'block' }}>
                       {diagnosis.expectedLift}
                     </strong>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#94a3b8', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <span>Psychological Driver:</span>
-                  <strong style={{ color: '#e2e8f0' }}>{diagnosis.psychologicalDriver}</strong>
+                  <strong style={{ color: '#334155' }}>{diagnosis.psychologicalDriver}</strong>
                 </div>
               </article>
 
               {/* UPDATED EVIDENCE CARD */}
-              <article className="evidence-card reveal reveal--two" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: '#131722', color: '#f8fafc', border: '1px solid #232936', marginTop: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#94a3b8', textTransform: 'uppercase' }}>
+              <article className="evidence-card reveal reveal--two" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', color: '#0f172a', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 32px -8px rgba(0,0,0,0.08)', marginTop: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#64748b', textTransform: 'uppercase' }}>
                     EVIDENCE SIGNALS
                   </div>
-                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#64748b', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#475569', fontWeight: 600 }}>
                     {diagnosis.signals.length} FOUND
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {diagnosis.signals.map((signal, index) => {
-                    const waveColors = ['#c084fc', '#38bdf8', '#2563eb']; // Lavender, Cyan, Deep Blue
+                    const waveColors = ['#8b5cf6', '#0ea5e9', '#3b82f6']; // Violet, Sky Blue, Blue
                     const color = waveColors[index % waveColors.length];
 
                     return (
@@ -751,27 +751,27 @@ CRITICAL RULES:
                         gap: '1rem', 
                         padding: '1rem', 
                         borderRadius: '0.75rem', 
-                        background: 'rgba(255,255,255,0.03)', 
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        background: '#ffffff', 
+                        border: '1px solid #e2e8f0',
                         borderLeft: `3px solid ${color}` 
                       }}>
                         <div style={{ color: color, marginTop: '2px' }}>
                           {index === 0 ? <TrendingDown size={18} /> : index === 1 ? <Clock3 size={18} /> : <MousePointer2 size={18} />}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <strong style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc' }}>{signal.label}</strong>
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.4 }}>{signal.detail}</span>
+                          <strong style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>{signal.label}</strong>
+                          <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>{signal.detail}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <button style={{ 
                     background: 'none', 
                     border: 'none', 
-                    color: '#94a3b8', 
+                    color: '#64748b', 
                     fontSize: '0.75rem', 
                     display: 'flex', 
                     alignItems: 'center', 
