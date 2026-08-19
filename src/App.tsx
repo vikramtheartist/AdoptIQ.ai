@@ -40,7 +40,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 88,
     behavioralPattern: 'Invisible value',
     psychologicalDriver: 'Attentional blindness',
-    strategicPrescription: 'Embed non-intrusive contextual cues within core daily tools and launch segmented notification bursts to drive high-intent discovery.',
+    strategicPrescription: 'Embed non-intrusive contextual cues within core daily workflows and launch segmented notification bursts to drive high-intent discovery.',
     diagnosis: 'Users are not encountering the capability at the moment they have a relevant need, so its value never enters their consideration set.',
     signals: [
       { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent sessions.', tone: 'coral' },
@@ -100,7 +100,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 84,
     behavioralPattern: 'Habit interruption',
     psychologicalDriver: 'Low reinforcement',
-    strategicPrescription: 'Default to a visual UI, enable a plain-text command palette (Cmd+K) with inline shortcut hints, and scaffold complex syntax progressively.',
+    strategicPrescription: 'Default to a visual UI, enable a plain-text command palette (Cmd+K) with inline shortcut hints, and introduce advanced syntax gradually via contextual micro-prompts.',
     diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
     signals: [
       { label: 'Strong first session', detail: 'Initial value is visible and measurable.', tone: 'coral' },
@@ -108,10 +108,10 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Workflow fragmentation', detail: 'Users leave the product to complete manual routines.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Automated Task Support', description: 'Suggest shortcuts and automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'User Forums / Communities', description: 'Spaces for peer learning and best practices.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Personalized Learning Paths', description: 'Suggested mastery challenges based on user activity.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'In-App Surveys / Feedback Prompts', description: 'Gather qualitative feedback on friction points.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Automated Task Support', description: 'Copilot suggests shortcuts and automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Advanced Tutorials & Sandbox', description: 'In-depth sessions covering syntax and shortcut mastery.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'User Forums & Community QA', description: 'Peer support spaces for continuous learning.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'In-App Surveys & Feedback Prompts', description: 'Quick ways to identify specific syntax hurdles.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
   },
@@ -207,21 +207,30 @@ export default function App() {
   const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
 
+  const classifyPromptFallback = useCallback((text: string): AdoptStage => {
+    const q = text.toLowerCase();
+    if (q.includes('share') || q.includes('team') || q.includes('scale') || q.includes('collaborat') || q.includes('champion')) return 'TRANSFORM';
+    if (q.includes('shortcut') || q.includes('syntax') || q.includes('habit') || q.includes('retention') || q.includes('week-two') || q.includes('complex') || q.includes('revert') || q.includes('proficient')) return 'PROFICIENT';
+    if (q.includes('why') || q.includes('value') || q.includes('benefit') || q.includes('roi') || q.includes('trial') || q.includes('landing')) return 'DESIRE';
+    if (q.includes('find') || q.includes('discover') || q.includes('see') || q.includes('aware') || q.includes('5%')) return 'AWARE';
+    return 'OPEN';
+  }, []);
+
   useEffect(() => {
     if (engineState !== 'analyzing') return;
-
     const phaseTimer = window.setInterval(() => {
       setPhaseIndex((index) => (index + 1) % analysisPhases.length);
     }, 450);
-
-    return () => {
-      window.clearInterval(phaseTimer);
-    };
+    return () => window.clearInterval(phaseTimer);
   }, [engineState]);
 
   const startDiagnosis = async (customQuery?: string) => {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
+
+    // Set fallback stage first
+    const detected = classifyPromptFallback(textToAnalyze);
+    setActiveStage(detected);
 
     setWaveState('submitting');
     setEngineState('analyzing');
@@ -229,7 +238,6 @@ export default function App() {
 
     try {
       const aiResult: DynamicDiagnosisPayload = await generateDynamicDiagnosis(textToAnalyze);
-      
       const newDiagnosis: Diagnosis = {
         stageLabel: aiResult.stageLabel,
         confidence: aiResult.confidence,
@@ -248,12 +256,12 @@ export default function App() {
       }));
       setActiveStage(aiResult.stage);
     } catch (err) {
-      console.warn('Falling back to local heuristic model:', err);
+      console.warn('Using local fallback:', err);
     } finally {
       setTimeout(() => {
         setEngineState('results');
         setWaveState('results');
-      }, 1400);
+      }, 1200);
     }
   };
 
@@ -267,7 +275,6 @@ export default function App() {
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
-      {/* Top Navbar */}
       <header className="topbar">
         <div className="brand-mark" aria-label="ADOPT Engine">
           <span className="brand-mark__shape" />
@@ -275,26 +282,19 @@ export default function App() {
         </div>
         <div className="topbar__right">
           <span className="topbar__status">
-            <span className="status-dot" /> AI Engine Online (Gemini 2.5)
+            <span className="status-dot" /> AI Engine Online
           </span>
           <span className="topbar__divider" />
           <span className="topbar__edition">Behavioral intelligence / 01</span>
         </div>
       </header>
 
-      {/* VIEW 1: Input Screen */}
       {engineState === 'diagnose' && (
         <section className="diagnose-view" aria-labelledby="page-title">
           <div className="hero-copy">
-            <p className="eyebrow">
-              ADOPT ENGINE <span>·</span> BEHAVIORAL INTELLIGENCE
-            </p>
-            <h1 id="page-title">
-              Diagnose your <strong>product adoption</strong>
-            </h1>
-            <p className="hero-subtitle">
-              Give the engine messy signals. Get the behavioral reason — and the tailored next move.
-            </p>
+            <p className="eyebrow">ADOPT ENGINE <span>·</span> BEHAVIORAL INTELLIGENCE</p>
+            <h1 id="page-title">Diagnose your <strong>product adoption</strong></h1>
+            <p className="hero-subtitle">Give the engine messy signals. Get the behavioral reason — and the tailored next move.</p>
           </div>
 
           <div className="input-stage">
@@ -313,9 +313,7 @@ export default function App() {
                   setWaveState('listening');
                 }}
                 onBlur={() => setIsFocused(false)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') startDiagnosis();
-                }}
+                onKeyDown={(event) => event.key === 'Enter' && startDiagnosis()}
                 placeholder="Enter user problem, telemetry, user feedback, funnel drop-offs"
                 aria-label="Describe your adoption problem"
               />
@@ -355,46 +353,32 @@ export default function App() {
 
           <div className="hero-footer">
             <span>Structured around five behavioral stages</span>
-            <div>
-              {stages.map((stage) => (
-                <span key={stage.key}>{stage.label}</span>
-              ))}
-            </div>
+            <div>{stages.map((stage) => <span key={stage.key}>{stage.label}</span>)}</div>
           </div>
         </section>
       )}
 
-      {/* VIEW 2: Analyzing Pulse */}
       {engineState === 'analyzing' && (
         <section className="analysis-view" aria-live="polite">
-          <div className="analysis-orbit">
-            <span />
-            <span />
-            <span />
-          </div>
+          <div className="analysis-orbit"><span /><span /><span /></div>
           <SignalWave state={waveState} activity={1.35} />
           <div className="analysis-status">
             <span className="analysis-status__pulse" />
             <span>{analysisPhases[phaseIndex]}</span>
           </div>
-          <p className="analysis-caption">The AI engine is synthesizing your signal into concrete before/after UX moves.</p>
+          <p className="analysis-caption">The AI engine is synthesizing your signal into concrete UX moves.</p>
           <div className="analysis-progress">
             <span style={{ width: `${(phaseIndex + 1) * 20}%` }} />
           </div>
         </section>
       )}
 
-      {/* VIEW 3: Tailored Results View */}
       {engineState === 'results' && (
         <section className="results-view" aria-labelledby="results-title">
           <div className="results-heading">
             <div>
-              <p className="eyebrow">
-                DIAGNOSIS COMPLETE <span>·</span> SIGNAL RESOLVED
-              </p>
-              <h2 id="results-title">
-                The adoption story, <strong>made actionable.</strong>
-              </h2>
+              <p className="eyebrow">DIAGNOSIS COMPLETE <span>·</span> SIGNAL RESOLVED</p>
+              <h2 id="results-title">The adoption story, <strong>made actionable.</strong></h2>
             </div>
             <button className="reset-button" onClick={reset}>
               Run another diagnosis <ArrowUpRight size={16} />
@@ -446,39 +430,23 @@ export default function App() {
                   <h3>{diagnosis.stageLabel}</h3>
                   <div className="confidence">
                     <strong>{diagnosis.confidence}%</strong>
-                    <span>
-                      Confidence
-                      <br />
-                      score
-                    </span>
+                    <span>Confidence<br />score</span>
                   </div>
                 </div>
                 <p>{diagnosis.diagnosis}</p>
                 <div className="diagnosis-meta">
-                  <span>
-                    Pattern <strong>{diagnosis.behavioralPattern}</strong>
-                  </span>
-                  <span>
-                    Driver <strong>{diagnosis.psychologicalDriver}</strong>
-                  </span>
+                  <span>Pattern <strong>{diagnosis.behavioralPattern}</strong></span>
+                  <span>Driver <strong>{diagnosis.psychologicalDriver}</strong></span>
                 </div>
               </article>
 
               <article className="evidence-card reveal reveal--two">
-                <div className="section-label">
-                  Evidence signals <span>· {diagnosis.signals.length} found</span>
-                </div>
+                <div className="section-label">Evidence signals <span>· {diagnosis.signals.length} found</span></div>
                 <div className="signal-list">
                   {diagnosis.signals.map((signal, index) => (
                     <div className={`evidence-row evidence-row--${signal.tone}`} key={signal.label}>
                       <div className="evidence-icon">
-                        {index === 0 ? (
-                          <TrendingDown size={16} />
-                        ) : index === 1 ? (
-                          <Clock3 size={16} />
-                        ) : (
-                          <MousePointer2 size={15} />
-                        )}
+                        {index === 0 ? <TrendingDown size={16} /> : index === 1 ? <Clock3 size={16} /> : <MousePointer2 size={15} />}
                       </div>
                       <div>
                         <strong>{signal.label}</strong>
@@ -487,31 +455,17 @@ export default function App() {
                     </div>
                   ))}
                 </div>
-                <button className="telemetry-link">
-                  View raw telemetry logs <ArrowUpRight size={15} />
-                </button>
+                <button className="telemetry-link">View raw telemetry logs <ArrowUpRight size={15} /></button>
               </article>
 
               <article className="takeaway-card reveal reveal--three">
                 <div className="section-label">Executive takeaway & Key Principles</div>
                 <p>“{diagnosis.takeaway}”</p>
                 <div className="takeaway-grid">
-                  <span>
-                    <small>Behavioral bottleneck</small>
-                    <strong>{stages.find((stage) => stage.key === activeStage)?.label}</strong>
-                  </span>
-                  <span>
-                    <small>Primary driver</small>
-                    <strong>{diagnosis.psychologicalDriver}</strong>
-                  </span>
-                  <span>
-                    <small>Recommended move</small>
-                    <strong>Execute Interventions</strong>
-                  </span>
-                  <span>
-                    <small>Expected outcome</small>
-                    <strong>Accelerated Lift</strong>
-                  </span>
+                  <span><small>Behavioral bottleneck</small><strong>{stages.find((stage) => stage.key === activeStage)?.label}</strong></span>
+                  <span><small>Primary driver</small><strong>{diagnosis.psychologicalDriver}</strong></span>
+                  <span><small>Recommended move</small><strong>Execute Interventions</strong></span>
+                  <span><small>Expected outcome</small><strong>Accelerated Lift</strong></span>
                 </div>
               </article>
             </div>
@@ -520,49 +474,26 @@ export default function App() {
               <div className="intervention-heading reveal reveal--one">
                 <div>
                   <p className="eyebrow">FROM DIAGNOSIS TO DESIGN</p>
-                  <h3>
-                    Tailored <strong>interventions</strong>
-                  </h3>
+                  <h3>Tailored <strong>interventions</strong></h3>
                 </div>
-                <span className="intervention-count">
-                  {diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves
-                </span>
+                <span className="intervention-count">{diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves</span>
               </div>
-              <p className="intervention-intro reveal reveal--one">
-                High-impact UX recommendations synthesized specifically for this workflow problem.
-              </p>
+              <p className="intervention-intro reveal reveal--one">High-impact UX recommendations synthesized specifically for this workflow problem.</p>
               {diagnosis.interventions.map((intervention, index) => (
                 <article className={`intervention-card reveal reveal--${index + 2}`} key={intervention.title}>
                   <div className="intervention-card__top">
-                    <span>
-                      {index + 1 < 10 ? `0${index + 1}` : index + 1} — {intervention.priority}
-                    </span>
+                    <span>{index + 1 < 10 ? `0${index + 1}` : index + 1} — {intervention.priority}</span>
                     <span>{intervention.impact} impact</span>
                   </div>
                   <h4>{intervention.title}</h4>
-                  <p>
-                    {generated === index
-                      ? `Generated blueprint for ${intervention.title}: Interaction pattern reducing cognitive friction with direct contextual defaults.`
-                      : intervention.description}
-                  </p>
+                  <p>{generated === index ? `Generated blueprint for ${intervention.title}: Interaction pattern reducing cognitive friction with direct contextual defaults.` : intervention.description}</p>
                   <div className="intervention-card__footer">
                     <div className="chips">
                       <span>{intervention.impact} impact</span>
                       <span>{intervention.effort} effort</span>
                     </div>
-                    <button
-                      onClick={() => setGenerated(index)}
-                      className={generated === index ? 'is-generated' : ''}
-                    >
-                      {generated === index ? (
-                        <>
-                          <Check size={15} /> Concept ready
-                        </>
-                      ) : (
-                        <>
-                          Generate UX concept <ArrowUpRight size={15} />
-                        </>
-                      )}
+                    <button onClick={() => setGenerated(index)} className={generated === index ? 'is-generated' : ''}>
+                      {generated === index ? <><Check size={15} /> Concept ready</> : <>Generate UX concept <ArrowUpRight size={15} /></>}
                     </button>
                   </div>
                   {generated === index && (
@@ -577,7 +508,6 @@ export default function App() {
         </section>
       )}
 
-      {/* Footer */}
       <footer className="page-footer">
         <span>ADOPT Engine</span>
         <span>Listen · Interpret · Diagnose · Recommend</span>

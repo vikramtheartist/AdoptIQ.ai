@@ -39,7 +39,7 @@ const responseSchema: Schema = {
     psychologicalDriver: { type: Type.STRING },
     strategicPrescription: {
       type: Type.STRING,
-      description: 'A crisp, 2-sentence actionable tactical direction. Do NOT summarize the user problem. Tell the team exactly what to build or change (e.g., "Default to visual UI, enable Cmd+K palette with inline hints, and scaffold syntax progressively.").',
+      description: 'A crisp 2-sentence actionable tactical direction. Do NOT repeat the user input. Provide direct UX guidance (e.g., "Default to a visual UI, enable a plain-text command palette (Cmd+K) with inline shortcut hints, and introduce advanced syntax gradually via contextual micro-prompts.").',
     },
     problemSummary: { type: Type.STRING },
     takeaway: { type: Type.STRING },
@@ -87,23 +87,22 @@ const responseSchema: Schema = {
 export async function generateDynamicDiagnosis(userPrompt: string): Promise<DynamicDiagnosisPayload> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('VITE_GEMINI_API_KEY is not configured in .env');
+    throw new Error('VITE_GEMINI_API_KEY is not configured');
   }
 
   const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = `
-You are the ADOPT Intelligence Engine. Analyze friction, telemetry, or user feedback and diagnose which ADOPT stage is broken:
-- AWARE: Discovery, reach, invisible entry points, banners, announcement channels.
-- DESIRE: Acquisition, landing page, ambiguous ROI, trial conversion, benefit proof.
-- OPEN: Activation, onboarding, blank-canvas paralysis, step-by-step setup, SSO.
-- PROFICIENT: Retention, shortcuts, advanced syntax, complex rules, habituation, week-2 drop-offs.
-- TRANSFORM: Scaling, team sharing, champion mentorship, peer templates, organizational advocacy.
+You are the ADOPT Intelligence Engine. Analyze product adoption friction and diagnose which ADOPT stage is broken:
+- AWARE: Feature discovery, visibility, exposure, banners, announcements.
+- DESIRE: Value clarity, motivation, ROI calculation, trial conversion.
+- OPEN: Activation, onboarding, blank canvas, setup friction, SSO.
+- PROFICIENT: Habit formation, keyboard shortcuts, advanced syntax, complex rules, week-2 retention drop-offs.
+- TRANSFORM: Team sharing, collaboration, champion programs, organizational scaling.
 
-DIAGNOSIS RULES:
-1. If users struggle with shortcuts, advanced rules, syntax, or building repeat habits after first use, route strictly to PROFICIENT.
-2. Provide 'strategicPrescription': Exactly 2 sentences stating what UI/UX modifications to make. Never repeat the user's problem.
-3. Generate 3 to 5 interventions tailored with contextual UI terms reflecting the diagnosed stage.
+CLASSIFICATION RULES:
+- If the problem mentions shortcuts, syntax, complex rules, or habit building after first use -> MUST classify as PROFICIENT.
+- Generate 'strategicPrescription' as a 2-sentence actionable solution.
 `;
 
   const response = await ai.models.generateContent({
@@ -113,12 +112,12 @@ DIAGNOSIS RULES:
       systemInstruction,
       responseMimeType: 'application/json',
       responseSchema,
-      temperature: 0.2,
+      temperature: 0.1,
     },
   });
 
   if (!response.text) {
-    throw new Error('Empty response from diagnosis engine');
+    throw new Error('Empty response from model');
   }
 
   return JSON.parse(response.text) as DynamicDiagnosisPayload;
