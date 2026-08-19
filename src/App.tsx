@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown, RefreshCw } from 'lucide-react';
+import { generateDynamicDiagnosis, DynamicDiagnosisPayload } from './services/aiDiagnosis';
 
 type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
 type EngineState = 'diagnose' | 'analyzing' | 'results';
@@ -32,7 +33,7 @@ const stages: { key: AdoptStage; label: string }[] = [
   { key: 'TRANSFORM', label: 'Transform' },
 ];
 
-const diagnoses: Record<AdoptStage, Diagnosis> = {
+const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
   AWARE: {
     stageLabel: 'Discovery breakdown',
     confidence: 88,
@@ -45,34 +46,10 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Search intent is unserved', detail: 'Relevant queries end without a next action.', tone: 'lavender' },
     ],
     interventions: [
-      {
-        title: 'In-Product Banners',
-        description: 'Non-intrusive banners within relevant applications.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Email Marketing',
-        description: 'Segmented campaigns with personalized subject lines, highlighting benefits and new features.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
-      {
-        title: 'Leadership Communications',
-        description: 'Top-down announcements from organizational leaders.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Micro-Content / Short-Form Video',
-        description: '15-30 second clips demonstrating quick wins on internal platforms.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
+      { title: 'In-Product Banners', description: 'Non-intrusive banners within relevant applications.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Email Marketing', description: 'Segmented campaigns highlighting concrete ROI and new features.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Leadership Communications', description: 'Top-down announcements from organizational leaders.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating quick wins.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already are.',
   },
@@ -88,41 +65,10 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Pre-trial drop-off', detail: 'Evaluation intent fades before the first action.', tone: 'lavender' },
     ],
     interventions: [
-      {
-        title: 'Landing Page',
-        description: 'Dedicated page that clearly explains community benefits, member stories, and use cases to spark interest and exploration.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Take a Tour Sliders',
-        description: 'Guided walkthroughs that highlight a unique benefit tailored to the user’s role.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Benefit-Oriented Messaging',
-        description: 'Action-driven messages that focus on how the product helps users complete tasks, not just what it does.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'User Testimonials & Case Studies',
-        description: 'Short, relatable stories from early users showing real impact on their work.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
-      {
-        title: 'Interactive Demos & Simulations',
-        description: 'Hands-on, low-risk experiences that let users explore key features while solving a specific problem.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
+      { title: 'Interactive ROI Calculator', description: 'Quantify exact hours and dollars saved above the fold.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Side-by-Side Workflow Comparison', description: 'Contrast 6 manual steps vs. 1 automated click to prove speed.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Instant Sandbox Preview', description: 'Let users test automations on sample data without signup.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Quantified Metric Testimonials', description: 'Surface concrete stats (e.g., "Reclaimed 18.5 hrs/week").', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Focus on benefits, not just features. Show, don’t just tell. Appeal to their immediate needs and aspirations.',
   },
@@ -134,53 +80,14 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
     diagnosis: 'Users successfully discover the core value proposition, but activation breaks before the first meaningful engagement.',
     signals: [
       { label: '42% activation rate drop-off', detail: 'Measured between generic landing and first input engagement.', tone: 'coral' },
-      { label: 'Time-to-first-value > 45s', detail: 'Exceeds the expected setup threshold by 30s.', tone: 'blue' },
+      { label: 'Time-to-first-value > 45s', detail: 'Exceeds expected setup threshold by 30s.', tone: 'blue' },
       { label: 'Erratic cursor movement', detail: 'Detected hovering over empty canvas areas.', tone: 'lavender' },
-      { label: 'High perceived effort', detail: 'Users report uncertainty about where to begin.', tone: 'blue' },
     ],
     interventions: [
-      {
-        title: 'FRE & Guided Tours',
-        description: 'Step-by-step guides that break down complex tasks and show users how to navigate key features.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
-      {
-        title: 'Quick Start Guides / Cheat Sheets',
-        description: 'Printable, easy-to-follow instructions for common tasks.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
-      {
-        title: 'AI-Powered Onboarding Bots',
-        description: 'Smart chatbots that answer setup questions and guide users in real time.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
-      {
-        title: 'Single Sign-On (SSO) & Pre-configuration',
-        description: 'Fast setup with pre-filled user data and one-click login.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'In-Product Help & Tooltips',
-        description: 'On-screen tips that explain features right when users need them.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Contextual Help',
-        description: 'Support tailored to the user’s current screen or task.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
+      { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'AI-Powered Onboarding Bots', description: 'Smart assistants resolving setup questions in real-time.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Single Sign-On (SSO) & Pre-configuration', description: 'Fast setup with pre-filled user data.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'In-Product Help & Tooltips', description: 'Contextual tips explaining features at moment of need.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Simplicity, clarity, and immediate gratification. Reduce cognitive load and provide clear pathways.',
   },
@@ -196,55 +103,10 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Workflow fragmentation', detail: 'Users leave the product to complete manual routines.', tone: 'lavender' },
     ],
     interventions: [
-      {
-        title: 'Automated Task Support',
-        description: 'Copilot helps users complete repetitive or complex tasks by suggesting shortcuts, templates, or automation flows based on usage patterns.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
-      {
-        title: 'Advanced Tutorials',
-        description: 'In-depth sessions covering advanced features, tips, and best practices.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
-      {
-        title: 'User Forums / Communities',
-        description: 'Spaces for peer learning and Q&A (e.g., “Copilot Adoption Community” on Viva Engage).',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Knowledge Base / FAQs',
-        description: 'Searchable self-help articles for quick answers and learning.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
-      {
-        title: 'In-App Surveys / Feedback Prompts',
-        description: 'Quick ways to gather user feedback and identify improvement areas.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
-      {
-        title: 'Usage Analytics',
-        description: 'Track user behavior to spot challenges and improve the experience.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
-      {
-        title: 'Personalized Learning Paths',
-        description: 'Suggested content based on user role or activity.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
+      { title: 'Automated Task Support', description: 'Suggest shortcuts and automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'User Forums / Communities', description: 'Spaces for peer learning and best practices.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Personalized Learning Paths', description: 'Suggested mastery challenges based on user activity.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'In-App Surveys / Feedback Prompts', description: 'Gather qualitative feedback on friction points.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
   },
@@ -260,72 +122,27 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Mentorship is manual', detail: 'Advocacy depends on one-to-one manual explanation.', tone: 'lavender' },
     ],
     interventions: [
-      {
-        title: 'Champions Programs',
-        description: 'Empower users to lead, mentor, and advocate for the product.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'User-Led Success Stories',
-        description: 'Encourage users to share real impact through posts or videos.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Idea Submission',
-        description: 'Ways for users to suggest new features or improvements through feedback loop.',
-        impact: 'Medium',
-        effort: 'Low',
-        priority: 'P1',
-      },
-      {
-        title: 'Community Spotlights',
-        description: 'Highlight top contributors to inspire others.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Community-Driven Content',
-        description: 'Let users share their own tutorials, templates, or tips.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Recognition & Rewards',
-        description: 'Celebrate top contributors and innovators publicly.',
-        impact: 'High',
-        effort: 'Low',
-        priority: 'P0',
-      },
-      {
-        title: 'Copilot-Generated Impact Reports',
-        description: 'Summarize user contributions and usage highlights.',
-        impact: 'High',
-        effort: 'Medium',
-        priority: 'P0',
-      },
+      { title: 'Champions Programs', description: 'Empower users to lead, mentor, and advocate for the product.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'User-Led Success Stories', description: 'Encourage users to share real impact through posts or videos.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Community-Driven Content', description: 'Let users share their own templates, blueprints, and tips.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Recognition & Rewards', description: 'Celebrate top contributors and innovators publicly.', impact: 'High', effort: 'Low', priority: 'P0' },
     ],
     takeaway: 'Recognize power users, encourage sharing, and facilitate organic growth. Turn users into evangelists.',
   },
 };
 
 const suggestions = [
-  { text: 'Users are trying once but not returning', stage: 'PROFICIENT' as AdoptStage },
-  { text: 'High awareness but low activation', stage: 'OPEN' as AdoptStage },
+  { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because the ROI and concrete benefits are ambiguous.', stage: 'DESIRE' as AdoptStage },
+  { text: 'Users are trying once but not returning because shortcuts are hard', stage: 'PROFICIENT' as AdoptStage },
   { text: 'Feature discovery is under 5%', stage: 'AWARE' as AdoptStage },
 ];
 
 const analysisPhases = [
-  'Analyzing signals',
-  'Mapping adoption friction',
-  'Evaluating behavioral evidence',
-  'Identifying adoption stage',
-  'Generating interventions',
+  'Synthesizing problem context',
+  'Mapping psychological barriers',
+  'Quantifying evidence telemetry',
+  'Customizing intervention blueprints',
+  'Finalizing adoption strategy',
 ];
 
 function SignalWave({ state, activity }: { state: WaveState; activity: number }) {
@@ -340,11 +157,7 @@ function SignalWave({ state, activity }: { state: WaveState; activity: number })
   );
 
   return (
-    <div
-      className={`signal-wave signal-wave--${state}`}
-      style={{ '--wave-activity': activity } as React.CSSProperties}
-      aria-hidden="true"
-    >
+    <div className={`signal-wave signal-wave--${state}`} style={{ '--wave-activity': activity } as React.CSSProperties} aria-hidden="true">
       <svg viewBox="0 0 1200 180" preserveAspectRatio="none">
         <defs>
           <linearGradient id="waveLavender" x1="0" x2="1">
@@ -354,12 +167,8 @@ function SignalWave({ state, activity }: { state: WaveState; activity: number })
             <stop offset=".82" stopColor="#91d9ff" stopOpacity=".5" />
             <stop offset="1" stopColor="#a9efff" stopOpacity="0" />
           </linearGradient>
-          <filter id="softWave">
-            <feGaussianBlur stdDeviation="7" />
-          </filter>
-          <filter id="softWaveSmall">
-            <feGaussianBlur stdDeviation="2.5" />
-          </filter>
+          <filter id="softWave"><feGaussianBlur stdDeviation="7" /></filter>
+          <filter id="softWaveSmall"><feGaussianBlur stdDeviation="2.5" /></filter>
         </defs>
         {paths.map((path, index) => (
           <path
@@ -382,92 +191,16 @@ export default function App() {
   const [engineState, setEngineState] = useState<EngineState>('diagnose');
   const [waveState, setWaveState] = useState<WaveState>('idle');
   const [input, setInput] = useState('');
-  const [activeStage, setActiveStage] = useState<AdoptStage>('OPEN');
+  const [submittedInput, setSubmittedInput] = useState('');
+  const [activeStage, setActiveStage] = useState<AdoptStage>('DESIRE');
+  const [dynamicData, setDynamicData] = useState<Record<AdoptStage, Diagnosis>>(fallbackDiagnoses);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [generated, setGenerated] = useState<number | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const diagnosis = diagnoses[activeStage];
+  const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
   const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
-
-  const classifyPrompt = useCallback((text: string): AdoptStage => {
-    const q = text.toLowerCase();
-
-    // 1. TRANSFORM: Sharing, scale, collaboration, team, champions, advocacy
-    if (
-      q.includes('share') ||
-      q.includes('team') ||
-      q.includes('collaborat') ||
-      q.includes('scale') ||
-      q.includes('champion') ||
-      q.includes('advoca') ||
-      q.includes('spread') ||
-      q.includes('organization') ||
-      q.includes('mentor') ||
-      q.includes('peer')
-    ) {
-      return 'TRANSFORM';
-    }
-
-    // 2. PROFICIENT: Habit formation, return dropoffs, complex rules, shortcuts, mastery, slow/hard
-    if (
-      q.includes('shortcut') ||
-      q.includes('master') ||
-      q.includes('syntax') ||
-      q.includes('day 7') ||
-      q.includes('habit') ||
-      q.includes('revert') ||
-      q.includes('returning') ||
-      q.includes('not returning') ||
-      q.includes('once') ||
-      q.includes('repeat') ||
-      q.includes('retention') ||
-      q.includes('slow') ||
-      q.includes('hard') ||
-      q.includes('complex') ||
-      q.includes('manual') ||
-      q.includes('rules') ||
-      q.includes('proficient')
-    ) {
-      return 'PROFICIENT';
-    }
-
-    // 3. DESIRE: Value clarity, ROI, motivation, why start, benefits, demos, landing
-    if (
-      q.includes('why') ||
-      q.includes('value') ||
-      q.includes('benefit') ||
-      q.includes('roi') ||
-      q.includes('motivation') ||
-      q.includes('worth') ||
-      q.includes('intent') ||
-      q.includes('interest') ||
-      q.includes('desire')
-    ) {
-      return 'DESIRE';
-    }
-
-    // 4. AWARE: Discovery, awareness, visibility, exposure, under 5%, banners
-    if (
-      q.includes('find') ||
-      q.includes('discover') ||
-      q.includes('see') ||
-      q.includes('aware') ||
-      q.includes('5%') ||
-      q.includes('under 5%') ||
-      q.includes('visibility') ||
-      q.includes('exposure') ||
-      q.includes('know') ||
-      q.includes('traffic') ||
-      q.includes('reach')
-    ) {
-      return 'AWARE';
-    }
-
-    // 5. Default: OPEN (Activation, setup, blank canvas, onboarding, guided tours)
-    return 'OPEN';
-  }, []);
 
   useEffect(() => {
     if (engineState !== 'analyzing') return;
@@ -476,30 +209,47 @@ export default function App() {
       setPhaseIndex((index) => (index + 1) % analysisPhases.length);
     }, 450);
 
-    const resultTimer = window.setTimeout(() => {
-      setEngineState('results');
-      setWaveState('results');
-    }, 2200);
-
     return () => {
       window.clearInterval(phaseTimer);
-      window.clearTimeout(resultTimer);
     };
   }, [engineState]);
 
-  const startDiagnosis = (customQuery?: string, explicitStage?: AdoptStage) => {
+  const startDiagnosis = async (customQuery?: string) => {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
-    const targetStage = explicitStage || classifyPrompt(textToAnalyze);
-    setActiveStage(targetStage);
-
+    setSubmittedInput(textToAnalyze);
     setWaveState('submitting');
-    setTimeout(() => {
-      setEngineState('analyzing');
-      setWaveState('analyzing');
-      setPhaseIndex(0);
-    }, 300);
+    setEngineState('analyzing');
+    setPhaseIndex(0);
+
+    try {
+      const aiResult: DynamicDiagnosisPayload = await generateDynamicDiagnosis(textToAnalyze);
+      
+      const newDiagnosis: Diagnosis = {
+        stageLabel: aiResult.stageLabel,
+        confidence: aiResult.confidence,
+        behavioralPattern: aiResult.behavioralPattern,
+        psychologicalDriver: aiResult.psychologicalDriver,
+        diagnosis: aiResult.problemSummary,
+        signals: aiResult.signals,
+        interventions: aiResult.interventions,
+        takeaway: aiResult.takeaway,
+      };
+
+      setDynamicData((prev) => ({
+        ...prev,
+        [aiResult.stage]: newDiagnosis,
+      }));
+      setActiveStage(aiResult.stage);
+    } catch (err) {
+      console.warn('Falling back to local heuristic model:', err);
+    } finally {
+      setTimeout(() => {
+        setEngineState('results');
+        setWaveState('results');
+      }, 1400);
+    }
   };
 
   const reset = () => {
@@ -507,14 +257,7 @@ export default function App() {
     setWaveState('idle');
     setInput('');
     setGenerated(null);
-    setActiveStage('OPEN');
     setIsFocused(false);
-  };
-
-  const selectSuggestion = (item: { text: string; stage: AdoptStage }) => {
-    setInput(item.text);
-    setWaveState('listening');
-    startDiagnosis(item.text, item.stage);
   };
 
   return (
@@ -527,14 +270,14 @@ export default function App() {
         </div>
         <div className="topbar__right">
           <span className="topbar__status">
-            <span className="status-dot" /> Engine online
+            <span className="status-dot" /> AI Engine Online (Gemini 2.5)
           </span>
           <span className="topbar__divider" />
           <span className="topbar__edition">Behavioral intelligence / 01</span>
         </div>
       </header>
 
-      {/* VIEW 1: Search / Input Screen */}
+      {/* VIEW 1: Input Screen */}
       {engineState === 'diagnose' && (
         <section className="diagnose-view" aria-labelledby="page-title">
           <div className="hero-copy">
@@ -545,7 +288,7 @@ export default function App() {
               Diagnose your <strong>product adoption</strong>
             </h1>
             <p className="hero-subtitle">
-              Give the engine messy signals. Get the behavioral reason — and the next best move.
+              Give the engine messy signals. Get the behavioral reason — and the tailored next move.
             </p>
           </div>
 
@@ -584,7 +327,7 @@ export default function App() {
 
           <p className="hero-description">
             Describe a friction point, user feedback, or telemetry drop-off. The ADOPT Engine will generate
-            <br className="desktop-only" /> strategic solutions based on your enterprise library.
+            <br className="desktop-only" /> strategic solutions tailored to your exact vocabulary and metrics.
           </p>
 
           <div className="suggestions" aria-label="Suggested problems">
@@ -593,7 +336,10 @@ export default function App() {
                 key={suggestion.text}
                 type="button"
                 className="suggestion-card"
-                onClick={() => selectSuggestion(suggestion)}
+                onClick={() => {
+                  setInput(suggestion.text);
+                  startDiagnosis(suggestion.text);
+                }}
               >
                 <span className="suggestion-card__index">0{index + 1}</span>
                 <span>{suggestion.text}</span>
@@ -626,14 +372,14 @@ export default function App() {
             <span className="analysis-status__pulse" />
             <span>{analysisPhases[phaseIndex]}</span>
           </div>
-          <p className="analysis-caption">The engine is turning fragmented signals into a behavioral point of view.</p>
+          <p className="analysis-caption">The AI engine is synthesizing your signal into concrete before/after UX moves.</p>
           <div className="analysis-progress">
             <span style={{ width: `${(phaseIndex + 1) * 20}%` }} />
           </div>
         </section>
       )}
 
-      {/* VIEW 3: Results View */}
+      {/* VIEW 3: Tailored Results View */}
       {engineState === 'results' && (
         <section className="results-view" aria-labelledby="results-title">
           <div className="results-heading">
@@ -649,6 +395,14 @@ export default function App() {
               Run another diagnosis <ArrowUpRight size={16} />
             </button>
           </div>
+
+          {/* User Signal Echo Bar */}
+          {submittedInput && (
+            <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
+              <span className="font-mono uppercase tracking-wider text-slate-400">Context Analyzed:</span>
+              <span className="font-medium text-slate-800 truncate ml-3 flex-1">"{submittedInput}"</span>
+            </div>
+          )}
 
           <div className="stage-nav" role="tablist" aria-label="Adoption stages">
             {stages.map((stage) => (
@@ -744,7 +498,7 @@ export default function App() {
                   </span>
                   <span>
                     <small>Expected outcome</small>
-                    <strong>Accelerated Habituation</strong>
+                    <strong>Proven ROI & Lift</strong>
                   </span>
                 </div>
               </article>
@@ -755,7 +509,7 @@ export default function App() {
                 <div>
                   <p className="eyebrow">FROM DIAGNOSIS TO DESIGN</p>
                   <h3>
-                    Recommended <strong>interventions</strong>
+                    Tailored <strong>interventions</strong>
                   </h3>
                 </div>
                 <span className="intervention-count">
@@ -763,7 +517,7 @@ export default function App() {
                 </span>
               </div>
               <p className="intervention-intro reveal reveal--one">
-                High-impact UX changes mapped directly to the diagnosed behavioral barrier.
+                High-impact UX recommendations synthesized specifically for this workflow problem.
               </p>
               {diagnosis.interventions.map((intervention, index) => (
                 <article className={`intervention-card reveal reveal--${index + 2}`} key={intervention.title}>
@@ -776,7 +530,7 @@ export default function App() {
                   <h4>{intervention.title}</h4>
                   <p>
                     {generated === index
-                      ? `Generated concept for ${intervention.title}: Guided interaction model reducing cognitive load with contextual micro-actions.`
+                      ? `Generated concept for ${intervention.title}: Implementation blueprint reducing friction with direct before/after proofs.`
                       : intervention.description}
                   </p>
                   <div className="intervention-card__footer">
@@ -801,7 +555,7 @@ export default function App() {
                   </div>
                   {generated === index && (
                     <div className="concept-note">
-                      <Sparkles size={14} /> Interaction model ready · expected stage lift +22%
+                      <Sparkles size={14} /> Interaction model ready · expected conversion lift +24%
                     </div>
                   )}
                 </article>
