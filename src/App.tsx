@@ -183,7 +183,9 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
 
     let reqId: number;
     let phase = 0;
+    
     let currentAmp = 10;
+    let currentSpeed = 1.0;
 
     const dpr = window.devicePixelRatio || 1;
     const resize = () => {
@@ -195,11 +197,10 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
     window.addEventListener('resize', resize);
     resize();
 
-    // UPDATED COLOR PALETTE: Matching the Lavender, Deep Blue, and Cyan reference
     const waves = [
-      { color: 'rgba(192, 132, 252, 0.55)', speed: 0.04, shift: 0 },       // Lavender / Light Purple
-      { color: 'rgba(37, 99, 235, 0.55)', speed: 0.05, shift: 2.1 },        // Deep Royal Blue
-      { color: 'rgba(56, 189, 248, 0.55)', speed: 0.06, shift: 4.2 },       // Bright Cyan / Light Blue
+      { color: 'rgba(192, 132, 252, 0.55)', speed: 0.04, shift: 0 },       // Lavender
+      { color: 'rgba(37, 99, 235, 0.55)', speed: 0.05, shift: 2.1 },        // Deep Blue
+      { color: 'rgba(56, 189, 248, 0.55)', speed: 0.06, shift: 4.2 },       // Cyan
     ];
 
     const draw = () => {
@@ -210,11 +211,15 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
       const isGenerating = state === 'analyzing' || state === 'submitting';
       const isTyping = state === 'listening';
       
-      let targetAmp = 8.5; // Idle
+      let targetAmp = 8.5; 
       if (isTyping) targetAmp = 43 + (activity * 26);
       if (isGenerating) targetAmp = 120;
-
       currentAmp += (targetAmp - currentAmp) * 0.08;
+
+      let targetSpeed = 1.0; 
+      if (isTyping) targetSpeed = 0.2; 
+      if (isGenerating) targetSpeed = 4.0; 
+      currentSpeed += (targetSpeed - currentSpeed) * 0.05;
 
       waves.forEach((wave) => {
         ctx.beginPath();
@@ -238,7 +243,7 @@ function CanvasSiriWave({ state, activity }: { state: WaveState; activity: numbe
         ctx.fill();
       });
 
-      phase += 1;
+      phase += currentSpeed;
       reqId = requestAnimationFrame(draw);
     };
 
@@ -445,17 +450,10 @@ CRITICAL RULES:
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
-      <header className="topbar">
+      <header className="topbar" style={{ paddingBottom: '0.5rem' }}>
         <div className="brand-mark" aria-label="ADOPT Engine">
           <span className="brand-mark__shape" />
           <span className="brand-mark__shape brand-mark__shape--second" />
-        </div>
-        <div className="topbar__right">
-          <span className="topbar__status">
-            <span className="status-dot" /> ADOPT Counselor Online
-          </span>
-          <span className="topbar__divider" />
-          <span className="topbar__edition">Behavioral intelligence / 01</span>
         </div>
       </header>
 
@@ -544,27 +542,51 @@ CRITICAL RULES:
       )}
 
       {engineState === 'results' && (
-        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '1.5rem' }}>
-          <div className="results-heading">
+        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '0' }}>
+          <div className="results-heading" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="eyebrow">DIAGNOSIS COMPLETE <span>·</span> SIGNAL RESOLVED</p>
-              <h2 id="results-title">The adoption story, <strong>made actionable.</strong></h2>
+              <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748b' }}>
+                DIAGNOSIS COMPLETE <span>·</span> 
+                <span style={{ display: 'flex', alignItems: 'center', color: '#10b981', fontWeight: 600 }}>
+                  <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', marginRight: '6px', boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)' }} />
+                  ADOPT COUNSELOR ONLINE
+                </span>
+              </p>
+              <h2 id="results-title" style={{ fontSize: '2.2rem', letterSpacing: '-0.02em', fontWeight: 600, color: '#0f172a', margin: '0.2rem 0 0 0' }}>The adoption story, <strong>made actionable.</strong></h2>
             </div>
-            <button className="reset-button" onClick={reset}>
+            <button 
+              className="reset-button" 
+              onClick={reset}
+              style={{ 
+                padding: '0.5rem 1rem', 
+                borderRadius: '999px', 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0',
+                color: '#334155', 
+                fontWeight: 500, 
+                fontSize: '0.85rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.4rem', 
+                cursor: 'pointer', 
+                transition: 'all 0.2s ease',
+                marginTop: '1.5rem'
+              }}
+            >
               Run another diagnosis <ArrowUpRight size={16} />
             </button>
           </div>
 
-          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
+          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1.5rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
             <div className="siri-mesh-bg" />
             
-            <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.05)' }}>
+            <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(30px) saturate(180%)', WebkitBackdropFilter: 'blur(30px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 4px 24px -4px rgba(31, 38, 135, 0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-                <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #d946ef)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(217, 70, 239, 0.3)', marginTop: '2px' }}>
-                  <Sparkles size={20} />
+                <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #d946ef)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(217, 70, 239, 0.3)', marginTop: '2px' }}>
+                  <Sparkles size={18} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4f46e5', fontWeight: 700, marginBottom: '0.4rem' }}>
+                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4f46e5', fontWeight: 700, marginBottom: '0.5rem' }}>
                     AI SUMMARY & DIAGNOSIS
                   </div>
                   <p style={{ margin: 0, fontSize: '0.98rem', fontWeight: 500, color: '#0f172a', lineHeight: 1.6 }}>
