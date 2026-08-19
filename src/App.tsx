@@ -40,7 +40,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     confidence: 88,
     behavioralPattern: 'Invisible value',
     psychologicalDriver: 'Attentional blindness',
-    strategicPrescription: 'Embed non-intrusive contextual cues within core daily workflows and launch segmented notification bursts to drive high-intent discovery.',
+    strategicPrescription: 'Embed non-intrusive contextual cues within core daily workflows and launch targeted in-app banners to drive high-intent discovery.',
     diagnosis: 'Users are not encountering the capability at the moment they have a relevant need, so its value never enters their consideration set.',
     signals: [
       { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent sessions.', tone: 'coral' },
@@ -48,10 +48,10 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Search intent is unserved', detail: 'Relevant queries end without a next action.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'In-Product Banners', description: 'Non-intrusive banners within relevant applications and active workspaces.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Email Marketing', description: 'Segmented campaigns highlighting concrete ROI and newly launched capabilities.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Leadership Communications', description: 'Top-down announcements and endorsements from team leads.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating fast tactical wins on internal hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'In-Product Banners', description: 'Non-intrusive banners placed within primary daily workspaces.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Email Marketing', description: 'Segmented campaigns highlighting concrete ROI and new features.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Leadership Communications', description: 'Top-down announcements from organizational leads.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating fast tactical wins.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already are.',
   },
@@ -69,9 +69,9 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     ],
     interventions: [
       { title: 'Interactive ROI Calculator', description: 'Quantify exact hours and dollars saved above the fold.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Side-by-Side Workflow Comparison', description: 'Contrast 6 manual steps vs. 1 automated click to prove speed.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Instant Sandbox Preview', description: 'Let users test automations on sample data without signup.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Quantified Metric Testimonials', description: 'Surface concrete stats (e.g., "Reclaimed 18.5 hrs/week for 6-person team").', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Side-by-Side Workflow Comparison', description: 'Contrast manual steps vs. automated flows to prove speed.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Instant Sandbox Preview', description: 'Let users test automations on sample data without sign-up friction.', impact: 'High', effort: 'Medium', priority: 'P0' },
+      { title: 'Quantified Metric Testimonials', description: 'Surface concrete metrics (e.g., "Reclaimed 18.5 hrs/week").', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Focus on benefits, not just features. Show, don’t just tell. Appeal to their immediate needs and aspirations.',
   },
@@ -91,7 +91,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks into intuitive sub-actions.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'AI-Powered Onboarding Bots', description: 'Smart assistants resolving setup questions in real-time.', impact: 'High', effort: 'Medium', priority: 'P0' },
       { title: 'Single Sign-On (SSO) & Pre-configuration', description: 'Fast setup with pre-filled user data.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'In-Product Help & Tooltips', description: 'Contextual tips explaining features right at the point of action.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'In-Product Help & Tooltips', description: 'Contextual tips explaining features at the exact moment of need.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Simplicity, clarity, and immediate gratification. Reduce cognitive load and provide clear pathways.',
   },
@@ -101,17 +101,17 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
     behavioralPattern: 'Habit interruption',
     psychologicalDriver: 'High operational friction',
     strategicPrescription: 'Default to a visual UI, enable a plain-text command palette (Cmd+K) with inline shortcut hints, and introduce advanced syntax gradually via contextual micro-prompts.',
-    diagnosis: 'Users reach first value, but the experience does not help them build a repeatable workflow that becomes part of how they work.',
+    diagnosis: 'Users try the capability but revert to manual routines because multi-step rules and complex syntax create high cognitive load during habituation.',
     signals: [
       { label: 'Reverted to manual clicks', detail: 'High task completion drop-off due to multi-step rule complexity.', tone: 'coral' },
-      { label: 'Week-two retention drop-off', detail: 'Repeat habits failing to form after first session.', tone: 'blue' },
-      { label: 'Lack of automated assistance', detail: 'Users exit to manual routines when cognitive friction spikes.', tone: 'lavender' },
+      { label: 'Week-two retention drop-off', detail: 'Repeat habits failing to form after first successful use.', tone: 'blue' },
+      { label: 'Lack of automated assistance', detail: 'Users exit to manual routines when friction spikes.', tone: 'lavender' },
     ],
     interventions: [
       { title: 'Automated Task Support', description: 'Copilot suggests shortcuts and automation flows based on usage patterns.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Inline Visual Rule-Builder', description: 'Replace raw syntax and multi-step modals with natural-language block builders.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Contextual Keystroke Cues', description: 'Surface non-intrusive micro-hints showing fast keys during manual actions.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Personalized Habit Loops', description: 'Prompt one-click execution for repetitive multi-click sequences.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      { title: 'Inline Visual Rule-Builder', description: 'Replace complex multi-step rules with natural-language visual blocks.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Contextual Keystroke Cues', description: 'Surface non-intrusive micro-hints showing faster actions during manual clicks.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Personalized Habit Loops', description: 'Prompt one-click automation for repetitive multi-click sequences.', impact: 'Medium', effort: 'Low', priority: 'P1' },
     ],
     takeaway: 'Continuous learning, reinforcement, and addressing pain points. Encourage deeper engagement.',
   },
@@ -128,7 +128,7 @@ const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Mentorship is manual', detail: 'Advocacy depends on one-to-one manual explanation.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Champions Programs', description: 'Empower users to lead, mentor, and advocate for the product.', impact: 'High', effort: 'Low', priority: 'P0' },
+      { title: 'Champions Programs', description: 'Empower power users to lead, mentor, and advocate for the product.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'User-Led Success Stories', description: 'Encourage users to share real impact through posts or videos.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Community-Driven Content', description: 'Let users share their own templates, blueprints, and tips.', impact: 'High', effort: 'Low', priority: 'P0' },
       { title: 'Recognition & Rewards', description: 'Celebrate top contributors and innovators publicly.', impact: 'High', effort: 'Low', priority: 'P0' },
@@ -210,7 +210,7 @@ export default function App() {
   const classifyInput = useCallback((text: string): AdoptStage => {
     const q = text.toLowerCase();
 
-    // 1. PROFICIENT: Specific operational friction & repeat habit drop-offs take top priority
+    // 1. PROFICIENT MUST take priority over broad terms like "teams" or "users"
     if (
       q.includes('shortcut') ||
       q.includes('syntax') ||
@@ -230,7 +230,7 @@ export default function App() {
       return 'PROFICIENT';
     }
 
-    // 2. TRANSFORM: Scaling, advocacy, templates across teams, champions
+    // 2. TRANSFORM: Sharing templates, mentoring, advocacy
     if (
       q.includes('share') ||
       q.includes('scale') ||
@@ -238,8 +238,7 @@ export default function App() {
       q.includes('champion') ||
       q.includes('advoca') ||
       q.includes('mentor') ||
-      q.includes('transform') ||
-      q.includes('team')
+      q.includes('transform')
     ) {
       return 'TRANSFORM';
     }
@@ -271,7 +270,6 @@ export default function App() {
       return 'AWARE';
     }
 
-    // 5. Default: OPEN
     return 'OPEN';
   }, []);
 
@@ -287,30 +285,31 @@ export default function App() {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
 
-    // 1. Immediately apply rock-solid deterministic heuristic stage
-    const detectedStage = classifyInput(textToAnalyze);
-    setActiveStage(detectedStage);
+    // 1. Determine the correct heuristic stage first
+    const heuristicStage = classifyInput(textToAnalyze);
+    setActiveStage(heuristicStage);
 
     setWaveState('submitting');
     setEngineState('analyzing');
     setPhaseIndex(0);
 
-    // 2. Try Calling Gemini API for hyper-customized payload
+    // 2. Call Gemini API
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `
-You are the ADOPT Intelligence Engine. Analyze product adoption friction and diagnose which ADOPT stage is broken:
-- AWARE: Feature discovery, visibility, exposure, banners, announcements.
+You are the ADOPT Intelligence Engine. Classify user adoption problems strictly into one of the 5 ADOPT stages:
+- AWARE: Feature discovery, visibility, exposure, banners.
 - DESIRE: Value clarity, motivation, ROI calculation, trial conversion.
-- OPEN: Activation, onboarding, blank canvas, setup friction, SSO.
-- PROFICIENT: Habit formation, keyboard shortcuts, advanced syntax, complex rules, week-2 retention drop-offs, slow/hard friction.
-- TRANSFORM: Team sharing, collaboration, champion programs, organizational scaling.
+- OPEN: Activation, onboarding, blank canvas, setup friction.
+- PROFICIENT: Habit formation, keyboard shortcuts, advanced syntax, complex rules, week-2 retention drop-offs, slow/hard friction, reverting to manual clicks.
+- TRANSFORM: Team sharing, collaboration, champion programs, scaling internal blueprints.
 
-CRITICAL INSTRUCTIONS:
-- For multi-step rules, slow/hard complaints, or reverting to manual clicks -> CLASSIFY STRICTLY AS 'PROFICIENT'.
-- strategicPrescription: Exactly 2 clear, actionable sentences directing the product team on what UX changes to make. Never repeat the prompt.
+STRICT RULES:
+1. If the problem describes users or teams trying something once, finding rules hard/slow, lacking automated task support, or reverting to manual clicks, you MUST return stage = "PROFICIENT".
+2. Do NOT classify as TRANSFORM merely because the word "Teams" or "Users" appears.
+3. Provide strategicPrescription as exactly 2 actionable sentences detailing the exact UX changes to make.
 `;
         const responseSchema: Schema = {
           type: Type.OBJECT,
