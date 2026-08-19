@@ -33,8 +33,11 @@ const stages: { key: AdoptStage; label: string }[] = [
 ];
 
 const diagnoses: Record<AdoptStage, Diagnosis> = {
-  AWARE: {
-    stageLabel: 'Discovery breakdown', confidence: 79, behavioralPattern: 'Invisible value', psychologicalDriver: 'Attentional blindness',
+  AAWARE: {
+    stageLabel: 'Discovery breakdown',
+    confidence: 88,
+    behavioralPattern: 'Invisible value',
+    psychologicalDriver: 'Attentional blindness',
     diagnosis: 'Users are not encountering the capability at the moment they have a relevant need, so its value never enters their consideration set.',
     signals: [
       { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent sessions.', tone: 'coral' },
@@ -42,26 +45,36 @@ const diagnoses: Record<AdoptStage, Diagnosis> = {
       { label: 'Search intent is unserved', detail: 'Relevant queries end without a next action.', tone: 'lavender' },
     ],
     interventions: [
-      { title: 'Contextual discovery cues', description: 'Place a clear, benefit-led invitation at the moment an existing workflow makes the new capability relevant.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Intent-based entry points', description: 'Connect high-intent search and navigation moments to a focused first action.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Outcome-led education', description: 'Replace feature language with a short story of what users can accomplish next.', impact: 'Medium', effort: 'Low', priority: 'P1' },
+      {
+        title: 'In-Product Banners',
+        description: 'Non-intrusive banners placed directly within relevant applications and active workflows.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Email Marketing',
+        description: 'Segmented campaigns with personalized subject lines, highlighting immediate benefits and new features.',
+        impact: 'High',
+        effort: 'Medium',
+        priority: 'P0',
+      },
+      {
+        title: 'Leadership Communications',
+        description: 'Top-down announcements and endorsements from organizational leaders to establish priority.',
+        impact: 'High',
+        effort: 'Low',
+        priority: 'P0',
+      },
+      {
+        title: 'Micro-Content / Short-Form Video',
+        description: '15–30 second visual clips demonstrating quick wins on internal platforms and community channels.',
+        impact: 'Medium',
+        effort: 'Low',
+        priority: 'P1',
+      },
     ],
-    takeaway: "Adoption isn't failing because the capability lacks value. Users are failing to encounter it when the need is present.",
-  },
-  DESIRE: {
-    stageLabel: 'Motivation breakdown', confidence: 82, behavioralPattern: 'Value ambiguity', psychologicalDriver: 'Unclear reward',
-    diagnosis: 'Users understand that the capability exists, but the path from trying it to a meaningful outcome is not compelling enough to create intent.',
-    signals: [
-      { label: 'High awareness, low intent', detail: 'Recognition does not translate into trial.', tone: 'coral' },
-      { label: 'Value language is abstract', detail: 'Users cannot predict a concrete outcome.', tone: 'blue' },
-      { label: 'Drop-off before trial', detail: 'Interest fades before first action.', tone: 'lavender' },
-    ],
-    interventions: [
-      { title: 'Outcome-first framing', description: 'Lead with a concrete, recognizable result instead of describing the capability itself.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Proof in the moment', description: 'Show a small, credible example of the value users can unlock in one session.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Role-based success paths', description: 'Tailor the opening promise to the user’s job, intent, and immediate context.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: "Adoption isn't failing because users are unaware. They're failing to see a valuable enough reason to begin.",
+    takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already are.',
   },
   OPEN: {
     stageLabel: 'Activation breakdown', confidence: 87, behavioralPattern: 'Blank-canvas paralysis', psychologicalDriver: 'Cognitive overload',
