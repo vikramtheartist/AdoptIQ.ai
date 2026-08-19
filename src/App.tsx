@@ -554,27 +554,53 @@ CRITICAL RULES:
               </p>
               <h2 id="results-title" style={{ fontSize: '2.2rem', letterSpacing: '-0.02em', fontWeight: 600, color: '#0f172a', margin: '0.2rem 0 0 0' }}>The adoption story, <strong>made actionable.</strong></h2>
             </div>
-            <button 
-              className="reset-button" 
-              onClick={reset}
-              style={{ 
-                padding: '0.5rem 1rem', 
-                borderRadius: '999px', 
-                background: '#f8fafc', 
-                border: '1px solid #e2e8f0',
-                color: '#334155', 
-                fontWeight: 500, 
-                fontSize: '0.85rem', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.4rem', 
-                cursor: 'pointer', 
-                transition: 'all 0.2s ease',
-                marginTop: '1.5rem'
-              }}
-            >
-              Run another diagnosis <ArrowUpRight size={16} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1.5rem' }}>
+              <button 
+                className="reset-button" 
+                onClick={() => {
+                  const el = document.querySelector('.interventions-column');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                style={{ 
+                  padding: '0.5rem 1rem', 
+                  borderRadius: '999px', 
+                  background: '#f8fafc', 
+                  border: '1px solid #e2e8f0',
+                  color: '#334155', 
+                  fontWeight: 500, 
+                  fontSize: '0.85rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  cursor: 'pointer', 
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                ADOPT playbook
+              </button>
+              <button 
+                className="reset-button" 
+                onClick={reset}
+                style={{ 
+                  padding: '0.5rem 1rem', 
+                  borderRadius: '999px', 
+                  background: '#f8fafc', 
+                  border: '1px solid #e2e8f0',
+                  color: '#334155', 
+                  fontWeight: 500, 
+                  fontSize: '0.85rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.4rem', 
+                  cursor: 'pointer', 
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Run another diagnosis <ArrowUpRight size={16} />
+              </button>
+            </div>
           </div>
 
           <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1.5rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
