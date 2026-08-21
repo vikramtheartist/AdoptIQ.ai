@@ -1,331 +1,183 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ArrowUp, ArrowUpRight, Check, CirclePlus, Clock3, MousePointer2, Sparkles, TrendingDown, Activity, Zap, Compass } from 'lucide-react';
-import { GoogleGenAI, Type, Schema } from '@google/genai';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  ArrowUp,
+  ArrowUpRight,
+  ArrowRight,
+  CirclePlus,
+  Sparkles,
+  TrendingDown,
+  Activity,
+  Zap,
+  RotateCcw,
+  Download,
+  Share2,
+  Check,
+  BarChart2,
+  BarChart3,
+  MessageSquareQuote,
+  Users,
+  ShieldAlert,
+  Clock3,
+  Layers,
+  ChevronRight,
+  FileCheck,
+  Sliders,
+  ExternalLink,
+  Target,
+  Compass,
+  Info,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  BookOpen,
+  PlusCircle,
+  Plus,
+  Layout,
+  FileText,
+} from 'lucide-react';
+import { CanvasSiriWave, WaveState } from './components/CanvasSiriWave';
+import { SkeletonDashboard } from './components/SkeletonDashboard';
+import { IntermediateLoader } from './components/IntermediateLoader';
+import { SolutionPackModal } from './components/SolutionPackModal';
+import { ImpactModelModal } from './components/ImpactModelModal';
+import { StageDrilldownModal } from './components/StageDrilldownModal';
+import { DiagnosisExplanationModal } from './components/DiagnosisExplanationModal';
+import { WhyRecommendedModal } from './components/WhyRecommendedModal';
+import { StrengthenDiagnosisModal } from './components/StrengthenDiagnosisModal';
+import {
+  BehavioralDiagnosisResult,
+  RecommendationInitiative,
+  StageHealthItem,
+  generateEnterpriseDashboard,
+  fallbackDatasets,
+  classifyQueryStage,
+} from './services/aiDiagnosis';
+import { runBehavioralDiagnosis, ADOPT_META } from './services/behavioralEngine';
+import { isPlaybookInitiative } from './lib/adoptPlaybookRegistry';
 
-type AdoptStage = 'AWARE' | 'DESIRE' | 'OPEN' | 'PROFICIENT' | 'TRANSFORM';
 type EngineState = 'diagnose' | 'analyzing' | 'results';
-type WaveState = 'idle' | 'listening' | 'submitting' | 'analyzing' | 'transitioning' | 'results';
-
-type Intervention = {
-  title: string;
-  description: string;
-  impact: 'High' | 'Medium';
-  effort: 'Low' | 'Medium';
-  priority: 'P0' | 'P1';
-};
-
-type Diagnosis = {
-  stageLabel: string;
-  stageSubtext: string;
-  confidence: number;
-  behavioralPattern: string;
-  psychologicalDriver: string;
-  aiSummary: string;
-  stageFocusPrescription: string;
-  metricAtRisk: string;
-  expectedLift: string;
-  signals: { label: string; detail: string; tone: 'coral' | 'blue' | 'lavender' }[];
-  interventions: Intervention[];
-  takeaway: string;
-};
-
-const stages: { key: AdoptStage; label: string; definition: string; funnelIndex: string }[] = [
-  { key: 'AWARE', label: 'Aware', definition: 'Know about product / community', funnelIndex: '01 / AWARE' },
-  { key: 'DESIRE', label: 'Desire', definition: 'Ignite interest to explore', funnelIndex: '02 / DESIRE' },
-  { key: 'OPEN', label: 'Open', definition: 'Start getting value', funnelIndex: '03 / OPEN' },
-  { key: 'PROFICIENT', label: 'Proficient', definition: 'Engage in community & daily workflow', funnelIndex: '04 / PROFICIENT' },
-  { key: 'TRANSFORM', label: 'Transform', definition: 'Pillar for the community', funnelIndex: '05 / TRANSFORM' },
-];
-
-const fallbackDiagnoses: Record<AdoptStage, Diagnosis> = {
-  AWARE: {
-    stageLabel: 'Awareness Breakdown',
-    stageSubtext: 'Know about product & community',
-    confidence: 88,
-    behavioralPattern: 'Invisible Value',
-    psychologicalDriver: 'Attentional Blindness',
-    aiSummary: 'Users are operating without encountering entry points or discovering the solution. To drive discovery, place clear contextual cues directly within their active daily workspaces.',
-    stageFocusPrescription: 'Focus on the Aware stage by launching multi-channel discovery touchpoints, non-intrusive in-product banners, and leadership endorsements to enter the user consideration set.',
-    metricAtRisk: 'Feature Exposure Rate (< 5%)',
-    expectedLift: '+35% Reach & Exploration',
-    signals: [
-      { label: 'Feature discovery is under 5%', detail: 'Low exposure across high-intent active sessions.', tone: 'coral' },
-      { label: 'Low navigation reach', detail: 'Users rarely enter or stumble upon the feature surface.', tone: 'blue' },
-      { label: 'Search intent unserved', detail: 'Relevant user queries conclude without a clear next action.', tone: 'lavender' },
-    ],
-    interventions: [
-      { title: 'In-Product Banners', description: 'Non-intrusive banners placed directly within relevant applications and active workflows.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Email Marketing Campaigns', description: 'Segmented campaigns highlighting immediate value and newly launched capabilities.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Leadership Communications', description: 'Top-down announcements and endorsements from organizational leaders to establish priority.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Micro-Content / Short-Form Video', description: '15-30 second clips demonstrating quick wins on internal platforms and community hubs.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: 'Cut through the noise with targeted, compelling messaging. Leverage multiple touchpoints where your users already work.',
-  },
-  DESIRE: {
-    stageLabel: 'Interest & Motivation Breakdown',
-    stageSubtext: 'Ignite interest to explore',
-    confidence: 86,
-    behavioralPattern: 'Value Ambiguity',
-    psychologicalDriver: 'Unclear Reward vs Friction',
-    aiSummary: 'Visitors recognize the product exists but fail to see concrete ROI or tangible time savings, preventing trial intent. To convert interest, shift copy from abstract features to measurable before/after outcomes.',
-    stageFocusPrescription: 'Focus on the Desire stage by implementing interactive ROI calculators, side-by-side manual vs automated comparisons, and zero-friction sandbox previews.',
-    metricAtRisk: 'Landing-to-Trial Conversion (< 2%)',
-    expectedLift: '+28% Trial Start Lift',
-    signals: [
-      { label: 'High awareness, low trial intent', detail: 'Page visits fail to translate into active evaluation.', tone: 'coral' },
-      { label: 'Abstract value perception', detail: 'Users cannot anticipate a concrete workflow win from the messaging.', tone: 'blue' },
-      { label: 'Drop-off before trial exploration', detail: 'Evaluation intent fades before the first setup action.', tone: 'lavender' },
-    ],
-    interventions: [
-      { title: 'Dedicated Value Landing Page', description: 'Clearly explain community benefits, member stories, and use cases to spark interest.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Take a Tour Sliders', description: 'Guided walkthroughs highlighting unique benefits tailored to specific user roles.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Benefit-Oriented Messaging', description: 'Action-driven messages focusing on how the product completes jobs-to-be-done.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Interactive Demos & Simulations', description: 'Hands-on, low-risk sandbox experiences allowing exploration without sign-up friction.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'User Testimonials & Case Studies', description: 'Short, relatable stories from early users demonstrating real impact on their work.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: 'Focus on benefits, not just features. Show, don’t just tell. Appeal to their immediate needs and aspirations.',
-  },
-  OPEN: {
-    stageLabel: 'Activation & First-Run Breakdown',
-    stageSubtext: 'Start getting value',
-    confidence: 89,
-    behavioralPattern: 'Blank-Canvas Paralysis',
-    psychologicalDriver: 'Cognitive Overload at Setup',
-    aiSummary: 'Users initiate onboarding but abandon before completing their first workflow due to setup friction and blank-canvas paralysis. To drive activation, pre-fill workspaces with contextual templates and 1-click defaults.',
-    stageFocusPrescription: 'Focus on the Open stage by providing structured First Run Experiences (FRE), SSO pre-configurations, and real-time AI onboarding bots to ensure fast time-to-first-value.',
-    metricAtRisk: 'Time-to-First-Value (> 45s)',
-    expectedLift: '+42% Completed First Runs',
-    signals: [
-      { label: '42% activation rate drop-off', detail: 'Measured between initial entry and first meaningful value event.', tone: 'coral' },
-      { label: 'Time-to-first-value > 45s', detail: 'Exceeds expected baseline threshold by 30 seconds.', tone: 'blue' },
-      { label: 'Erratic cursor movement', detail: 'Detected hovering and stalls over blank setup screens.', tone: 'lavender' },
-    ],
-    interventions: [
-      { title: 'FRE & Guided Tours', description: 'Step-by-step guides breaking down complex tasks into intuitive sub-actions.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'AI-Powered Onboarding Bots', description: 'Smart assistants answering setup questions and guiding users in real time.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Single Sign-On (SSO) & Pre-configuration', description: 'Fast setup with pre-filled user data and 1-click workspace entry.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Quick Start Guides / Cheat Sheets', description: 'Printable, easy-to-follow instructions for common first-run tasks.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-      { title: 'In-Product Help & Contextual Tooltips', description: 'On-screen tips explaining features right at the moment of need.', impact: 'Medium', effort: 'Low', priority: 'P1' },
-    ],
-    takeaway: 'Simplicity, clarity, and immediate gratification. Reduce cognitive load and provide clear default pathways.',
-  },
-  PROFICIENT: {
-    stageLabel: 'Habituation & Mastery Breakdown',
-    stageSubtext: 'Engage in community & daily workflow',
-    confidence: 94,
-    behavioralPattern: 'Habit Interruption & Skills Gap',
-    psychologicalDriver: 'High Operational Friction',
-    aiSummary: 'Teams lack prompt literacy and confidence in managing outputs, causing them to stall before operational integration. To bridge the skills gap, replace blank inputs with structured prompt recipes and inline verification loops.',
-    stageFocusPrescription: 'Focus entirely on the Proficient stage by introducing automated task support, role-specific prompt templates, peer QA forums, and personalized learning paths to establish mastery.',
-    metricAtRisk: 'Workflow Output Accuracy & Habit Formation (-65%)',
-    expectedLift: '+38% Self-Sustaining Weekly Usage',
-    signals: [
-      { label: 'Prompt construction failure', detail: 'Users struggle to articulate instructions leading to low-quality outputs.', tone: 'coral' },
-      { label: 'Low output validation confidence', detail: 'Users lack criteria to verify and refine generated results.', tone: 'blue' },
-      { label: 'Sporadic task frequency', detail: 'Usage remains ad-hoc rather than integrating into daily workflows.', tone: 'lavender' },
-    ],
-    interventions: [
-      { title: 'Automated Task Support & Prompt Recipes', description: 'Provide structured, one-click prompt templates and inline syntax suggestions to eliminate blank-box anxiety.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Advanced Output Evaluation Tutorials', description: 'Practical modules teaching teams how to review, verify, and iterate on AI responses safely.', impact: 'High', effort: 'Medium', priority: 'P0' },
-      { title: 'Peer Practice Forums & Prompt Libraries', description: 'Searchable internal repositories of proven, high-performing prompts organized by job function.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Personalized Role-Based Learning Paths', description: 'Step-by-step competency roadmaps to progress users from basic querying to workflow mastery.', impact: 'Medium', effort: 'Medium', priority: 'P1' },
-    ],
-    takeaway: 'Overcome the skills gap through structural scaffolding. Replace open prompt bars with guided templates and clear evaluation criteria.',
-  },
-  TRANSFORM: {
-    stageLabel: 'Advocacy & Scaling Breakdown',
-    stageSubtext: 'Pillar for the community',
-    confidence: 92,
-    behavioralPattern: 'Unshared Expertise',
-    psychologicalDriver: 'Low Social & Network Leverage',
-    aiSummary: 'Power users develop highly productive behaviors, but expertise remains isolated without organic peer spread. To scale, build communal showcase libraries and formal recognition loops.',
-    stageFocusPrescription: 'Focus on the Transform stage by creating formal Champions Programs, peer-driven template libraries, and public spotlights to turn power users into organizational evangelists.',
-    metricAtRisk: 'Internal Viral Expansion (< 1.1x)',
-    expectedLift: '+48% Organic Peer Advocacy',
-    signals: [
-      { label: 'Power users are isolated', detail: 'Successful patterns stay siloed within individual accounts.', tone: 'coral' },
-      { label: 'Few shared workflows', detail: 'Teams cannot see, replicate, or reuse proven patterns.', tone: 'blue' },
-      { label: 'Mentorship is manual', detail: 'Advocacy depends entirely on one-to-one manual explanation.', tone: 'lavender' },
-    ],
-    interventions: [
-      { title: 'Champions Programs', description: 'Empower power users to lead, mentor, and advocate for the product across the org.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'User-Led Success Stories', description: 'Encourage users to share real impact through video clips and internal showcase posts.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Community Spotlights', description: 'Highlight top contributors and innovators to inspire peer adoption.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Community-Driven Content & Templates', description: 'Allow expert users to share their own tutorials, templates, and blueprints.', impact: 'High', effort: 'Low', priority: 'P0' },
-      { title: 'Recognition & Rewards', description: 'Publicly celebrate top contributors and champions with badges and leadership perks.', impact: 'High', effort: 'Low', priority: 'P0' },
-    ],
-    takeaway: 'Recognize power users, encourage sharing, and facilitate organic growth. Turn users into evangelists.',
-  },
-};
 
 const suggestions = [
-  { text: 'The Skills Gap: Teams lack the specific literacy or confidence required to write effective prompts or manage AI outputs correctly.', stage: 'PROFICIENT' as AdoptStage },
-  { text: '80% of organizations are experimenting with AI, but only 6 percent successfully scale it into daily workflows.', stage: 'PROFICIENT' as AdoptStage },
-  { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because ROI is ambiguous.', stage: 'DESIRE' as AdoptStage },
+  { text: 'We launched a new workflow dashboard 3 months ago. 85% of Finance Managers have never visited or know it exists.', stage: 'AWARE' },
+  { text: 'The Skills Gap: Teams lack the specific literacy or confidence required to write effective prompts or manage AI outputs correctly.', stage: 'PROFICIENT' },
+  { text: 'Users visit the landing page for our automation add-on, but less than 2% click to begin a trial because ROI is ambiguous.', stage: 'DESIRE' },
 ];
 
 const analysisPhases = [
-  'Synthesizing problem context',
-  'Consulting ADOPT Behavioral Model',
-  'Quantifying metric drop-offs',
-  'Mapping targeted initiatives',
-  'Finalizing strategic counselor playbook',
+  'Ingesting raw adoption signals & classifying provenance...',
+  'Executing 12-stage behavioral journey mapping...',
+  'Evaluating 5-stage ADOPT health degradation curve...',
+  'Running diagnostic critic pass & evaluating competing hypotheses...',
+  'Synthesizing root causes & prioritizing P0/P1 UX plays...',
 ];
 
-function CanvasSiriWave({ state, activity }: { state: WaveState; activity: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let reqId: number;
-    let phase = 0;
-    
-    let currentAmp = 10;
-    let currentSpeed = 1.0;
-
-    const dpr = window.devicePixelRatio || 1;
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
-    };
-    window.addEventListener('resize', resize);
-    resize();
-
-    const waves = [
-      { color: 'rgba(192, 132, 252, 0.55)', speed: 0.04, shift: 0 },       // Lavender
-      { color: 'rgba(37, 99, 235, 0.55)', speed: 0.05, shift: 2.1 },        // Deep Blue
-      { color: 'rgba(56, 189, 248, 0.55)', speed: 0.06, shift: 4.2 },       // Cyan
+function getDeliverablesForInitiative(init?: RecommendationInitiative | null) {
+  if (!init) {
+    return [
+      { key: 'ux_concept', label: 'UX concept', detail: 'Interactive UI wireframe & component spec' },
+      { key: 'interaction_flow', label: 'Interaction flow', detail: 'State transitions & trigger logic' },
+      { key: 'experiment_plan', label: 'Experiment plan', detail: 'A/B test design & variant hypotheses' },
+      { key: 'measurement_plan', label: 'Measurement plan', detail: 'Leading & lagging behavioral metrics' },
     ];
-
-    const draw = () => {
-      const w = canvas.getBoundingClientRect().width;
-      const h = canvas.getBoundingClientRect().height;
-      ctx.clearRect(0, 0, w, h);
-
-      const isGenerating = state === 'analyzing' || state === 'submitting';
-      const isTyping = state === 'listening';
-      
-      let targetAmp = 8.5; 
-      if (isTyping) targetAmp = 43 + (activity * 26);
-      if (isGenerating) targetAmp = 120;
-      currentAmp += (targetAmp - currentAmp) * 0.08;
-
-      let targetSpeed = 1.0; 
-      if (isTyping) targetSpeed = 0.2; 
-      if (isGenerating) targetSpeed = 4.0; 
-      currentSpeed += (targetSpeed - currentSpeed) * 0.05;
-
-      waves.forEach((wave) => {
-        ctx.beginPath();
-        
-        for (let i = 0; i <= w; i += 3) {
-          const x = (i / w) * 4 - 2;
-          const attenuation = Math.exp(-Math.pow(x, 2));
-          const y = Math.sin(x * 3 + phase * wave.speed + wave.shift) * currentAmp * attenuation;
-          ctx.lineTo(i, h / 2 + y);
-        }
-
-        for (let i = w; i >= 0; i -= 3) {
-          const x = (i / w) * 4 - 2;
-          const attenuation = Math.exp(-Math.pow(x, 2));
-          const y = Math.sin(x * 3 + phase * wave.speed + wave.shift) * currentAmp * attenuation;
-          ctx.lineTo(i, h / 2 - y);
-        }
-
-        ctx.closePath();
-        ctx.fillStyle = wave.color;
-        ctx.fill();
-      });
-
-      phase += currentSpeed;
-      reqId = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => {
-      cancelAnimationFrame(reqId);
-      window.removeEventListener('resize', resize);
-    };
-  }, [state, activity]);
-
-  return (
-    <div 
-      style={{ 
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '84%', 
-        height: '432px',
-        zIndex: 0,
-        pointerEvents: 'none',
-        mixBlendMode: 'multiply',
-        opacity: state === 'idle' ? 0.4 : 1,
-        transition: 'opacity 0.5s ease'
-      }}
-    >
-      <canvas 
-        ref={canvasRef} 
-        style={{ width: '100%', height: '100%' }} 
-      />
-    </div>
-  );
+  }
+  switch (init.solutionType) {
+    case 'ux_intervention':
+      return [
+        { key: 'ux_concept', label: 'UX concept', detail: 'Interactive UI wireframe & component spec' },
+        { key: 'interaction_flow', label: 'Interaction flow', detail: 'State transitions & trigger logic' },
+        { key: 'experiment_plan', label: 'Experiment plan', detail: 'A/B test design & variant hypotheses' },
+        { key: 'measurement_plan', label: 'Measurement plan', detail: 'Leading & lagging behavioral metrics' },
+      ];
+    case 'prompt_workflow':
+      return [
+        { key: 'workflow_model', label: 'Workflow model', detail: '1-click prompt scaffolding & recipe logic' },
+        { key: 'trigger_logic', label: 'Trigger logic', detail: 'Context detection & event listeners' },
+        { key: 'starting_ui', label: 'Starting UI', detail: 'In-workflow dock & autocomplete spec' },
+        { key: 'measurement_plan', label: 'Measurement plan', detail: 'Recipe completion & WAU tracking' },
+      ];
+    case 'campaign':
+      return [
+        { key: 'campaign_brief', label: 'Campaign brief', detail: 'Executive strategy & ROI positioning' },
+        { key: 'messaging', label: 'Role messaging', detail: 'Before/after time savings by persona' },
+        { key: 'sequence', label: 'Sequence', detail: '3-stage drip cadence' },
+        { key: 'measurement_plan', label: 'Measurement plan', detail: 'Trial conversion & CTR' },
+      ];
+    case 'champion_program':
+      return [
+        { key: 'rollout_plan', label: 'Rollout plan', detail: 'Departmental template hub & champion network' },
+        { key: 'template_library', label: 'Template library', detail: 'Vetted blueprint registry & sharing spec' },
+        { key: 'champion_badges', label: 'Champion badges', detail: 'Recognition & viral coefficient tracking' },
+        { key: 'measurement_plan', label: 'Measurement plan', detail: 'Cross-pod template multiplier' },
+      ];
+    default:
+      return [
+        { key: 'onboarding_flow', label: 'Onboarding flow', detail: '1-click seeded starter canvases' },
+        { key: 'starting_ui', label: 'Starting UI', detail: 'Zero-state templates & prompt samples' },
+        { key: 'experiment_plan', label: 'Experiment plan', detail: 'Activation funnel A/B test' },
+        { key: 'measurement_plan', label: 'Measurement plan', detail: 'Time-to-first-value & D7 retention' },
+      ];
+  }
 }
 
 export default function App() {
-  const [engineState, setEngineState] = useState<EngineState>('diagnose');
+  const [engineState, setEngineState] = useState<EngineState>('results');
   const [waveState, setWaveState] = useState<WaveState>('idle');
   const [input, setInput] = useState('');
-  const [activeStage, setActiveStage] = useState<AdoptStage>('PROFICIENT');
-  const [dynamicData, setDynamicData] = useState<Record<AdoptStage, Diagnosis>>(fallbackDiagnoses);
   const [phaseIndex, setPhaseIndex] = useState(0);
-  const [generated, setGenerated] = useState<number | null>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isMultiLine, setIsMultiLine] = useState(false);
+  const [isSkeletonResolving, setIsSkeletonResolving] = useState(false);
 
-  const diagnosis = dynamicData[activeStage] || fallbackDiagnoses[activeStage];
-  const activity = input.length > 0 ? Math.min(1.25, 0.85 + input.length / 90) : isFocused ? 1.08 : 1;
+  // Dashboard state
+  const [dashboardData, setDashboardData] = useState<BehavioralDiagnosisResult>(fallbackDatasets.PROFICIENT);
+  const [selectedStageDrilldown, setSelectedStageDrilldown] = useState<StageHealthItem | null>(null);
+  const [activeInitiative, setActiveInitiative] = useState<RecommendationInitiative | null>(null);
+  const [reasoningInitiative, setReasoningInitiative] = useState<RecommendationInitiative | null>(null);
 
-  const classifyInput = useCallback((text: string): AdoptStage => {
-    const q = text.toLowerCase();
-    if (
-      q.includes('skill') || q.includes('literacy') || q.includes('prompt') ||
-      q.includes('confidence') || q.includes('output') || q.includes('daily workflow') ||
-      q.includes('scale it into daily') || q.includes('experimenting') || q.includes('shortcut') ||
-      q.includes('syntax') || q.includes('rule') || q.includes('slow') ||
-      q.includes('hard') || q.includes('complex') || q.includes('habit') ||
-      q.includes('manual') || q.includes('revert') || q.includes('retention') ||
-      q.includes('proficient')
-    ) return 'PROFICIENT';
+  // Modals
+  const [isSolutionModalOpen, setIsSolutionModalOpen] = useState(false);
+  const [isImpactModalOpen, setIsImpactModalOpen] = useState(false);
+  const [isStageDrilldownOpen, setIsStageDrilldownOpen] = useState(false);
+  const [isDiagnosisExplanationOpen, setIsDiagnosisExplanationOpen] = useState(false);
+  const [isWhyRecommendedOpen, setIsWhyRecommendedOpen] = useState(false);
+  const [isStrengthenModalOpen, setIsStrengthenModalOpen] = useState(false);
+  const [copiedToast, setCopiedToast] = useState(false);
+  const [solutionStudioDropdownOpen, setSolutionStudioDropdownOpen] = useState<string | null>(null);
+  const [studioToast, setStudioToast] = useState<string | null>(null);
 
-    if (
-      q.includes('champion') || q.includes('advoca') || q.includes('mentor') ||
-      q.includes('pillar') || q.includes('transform') || q.includes('spotlight') ||
-      (q.includes('share') && q.includes('team')) || q.includes('scale across')
-    ) return 'TRANSFORM';
+  const triggerStudioToast = (optionTitle: string) => {
+    setSolutionStudioDropdownOpen(null);
+    setStudioToast('Coming Soon — Solution Studio Artifact Generator');
+    setTimeout(() => setStudioToast(null), 3500);
+  };
 
-    if (
-      q.includes('why') || q.includes('roi') || q.includes('value') ||
-      q.includes('benefit') || q.includes('landing') || q.includes('trial') ||
-      q.includes('convert') || q.includes('ignite') || q.includes('desire')
-    ) return 'DESIRE';
+  // Selected Checklist items for Solution Dock
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([
+    'ux_concept',
+    'campaign_brief',
+    'in_app_nudges',
+    'email_sequence',
+    'measurement_plan',
+  ]);
 
-    if (
-      q.includes('discover') || q.includes('aware') || q.includes('5%') ||
-      q.includes('find') || q.includes('visibility') || q.includes('banner') ||
-      q.includes('exposure') || q.includes('know about')
-    ) return 'AWARE';
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    return 'OPEN';
-  }, []);
+  const adjustHeight = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = '24px';
+    const isMulti = el.scrollHeight > 30 || input.includes('\n');
+    if (isMulti) {
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+    }
+    setIsMultiLine(isMulti);
+  }, [input]);
 
+  useEffect(() => {
+    adjustHeight();
+  }, [input, adjustHeight]);
+
+  // Phase timer during analyzing state
   useEffect(() => {
     if (engineState !== 'analyzing') return;
     const phaseTimer = window.setInterval(() => {
@@ -334,145 +186,219 @@ export default function App() {
     return () => window.clearInterval(phaseTimer);
   }, [engineState]);
 
+  // Close solution studio dropdown on document click
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setSolutionStudioDropdownOpen(null);
+    };
+    if (solutionStudioDropdownOpen) {
+      document.addEventListener('click', handleDocumentClick);
+    }
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [solutionStudioDropdownOpen]);
+
   const runDiagnosis = async (customQuery?: string) => {
     const textToAnalyze = customQuery || input;
     if (!textToAnalyze.trim()) return;
-
-    const detectedStage = classifyInput(textToAnalyze);
-    setActiveStage(detectedStage);
 
     setWaveState('submitting');
     setEngineState('analyzing');
     setPhaseIndex(0);
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (apiKey) {
-      try {
-        const ai = new GoogleGenAI({ apiKey });
-        
-        const systemInstruction = `
-You are the ADOPT Senior Behavioral Intelligence Counselor.
-Map the input to the exact 5 ADOPT stages:
-1. AWARE ("Know about community")
-2. DESIRE ("Ignite Interest to explore")
-3. OPEN ("Start getting value")
-4. PROFICIENT ("Engage in the community")
-5. TRANSFORM ("Pillar for the community")
-
-CRITICAL RULES:
-- If the input involves "skills gap", "prompting literacy", "scaling into daily workflows", or "reverting to manual clicks", you MUST classify as "PROFICIENT". Do NOT classify as TRANSFORM unless the core problem is power users lacking sharing mechanisms.
-- aiSummary MUST be 2-3 sentences diagnosing the root behavioral roadblock (e.g., status quo bias, cognitive overload).
-- stageFocusPrescription MUST be 1-2 sentences starting with "Focus on the [Stage] stage by..." and detail the exact UX shifts aligned to that stage.
-`;
-        const responseSchema: Schema = {
-          type: Type.OBJECT,
-          properties: {
-            stage: { type: Type.STRING, enum: ['AWARE', 'DESIRE', 'OPEN', 'PROFICIENT', 'TRANSFORM'] },
-            stageLabel: { type: Type.STRING },
-            stageSubtext: { type: Type.STRING },
-            confidence: { type: Type.INTEGER },
-            behavioralPattern: { type: Type.STRING },
-            psychologicalDriver: { type: Type.STRING },
-            aiSummary: { type: Type.STRING },
-            stageFocusPrescription: { type: Type.STRING },
-            metricAtRisk: { type: Type.STRING },
-            expectedLift: { type: Type.STRING },
-            takeaway: { type: Type.STRING },
-            signals: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  label: { type: Type.STRING },
-                  detail: { type: Type.STRING },
-                  tone: { type: Type.STRING, enum: ['coral', 'blue', 'lavender'] },
-                },
-                required: ['label', 'detail', 'tone'],
-              },
-            },
-            interventions: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  impact: { type: Type.STRING, enum: ['High', 'Medium'] },
-                  effort: { type: Type.STRING, enum: ['Low', 'Medium'] },
-                  priority: { type: Type.STRING, enum: ['P0', 'P1'] },
-                },
-                required: ['title', 'description', 'impact', 'effort', 'priority'],
-              },
-            },
-          },
-          required: [
-            'stage', 'stageLabel', 'stageSubtext', 'confidence', 'behavioralPattern', 'psychologicalDriver',
-            'aiSummary', 'stageFocusPrescription', 'metricAtRisk', 'expectedLift', 'takeaway', 'signals', 'interventions',
-          ],
-        };
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: textToAnalyze,
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-            responseSchema,
-            temperature: 0.1,
-          },
-        });
-
-        if (response.text) {
-          const parsed = JSON.parse(response.text);
-          setDynamicData((prev) => ({ ...prev, [parsed.stage]: parsed }));
-          setActiveStage(parsed.stage);
-        }
-      } catch (e) {
-        console.warn('AI API fallback used:', e);
-      }
-    }
-
-    setTimeout(() => {
+    const startTime = Date.now();
+    try {
+      const data = await generateEnterpriseDashboard(textToAnalyze);
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 1800 - elapsed);
+      setTimeout(() => {
+        setDashboardData(data);
+        setEngineState('results');
+        setIsSkeletonResolving(true);
+        setWaveState('results');
+        setTimeout(() => {
+          setIsSkeletonResolving(false);
+        }, 600);
+      }, remaining);
+    } catch (e) {
+      console.warn('Dashboard synthesis fallback:', e);
+      const data = runBehavioralDiagnosis(textToAnalyze);
+      setDashboardData(data);
       setEngineState('results');
+      setIsSkeletonResolving(true);
       setWaveState('results');
-    }, 1200);
+      setTimeout(() => {
+        setIsSkeletonResolving(false);
+      }, 600);
+    }
   };
 
   const reset = () => {
     setEngineState('diagnose');
     setWaveState('idle');
+    setIsSkeletonResolving(false);
     setInput('');
-    setGenerated(null);
     setIsFocused(false);
   };
 
-  const currentStageInfo = stages.find((s) => s.key === activeStage) || stages[3];
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedToast(true);
+    setTimeout(() => setCopiedToast(false), 2200);
+  };
+
+  const handleExport = () => {
+    const exportText = `# AdoptIQ Executive Behavioral Brief: ${dashboardData.dashboardTitle}
+Generated: ${new Date().toLocaleDateString()}
+Report Mode: ${dashboardData.reportMode.toUpperCase()}
+Primary Diagnosis: ${dashboardData.primaryDiagnosis.title}
+Key Behavioral Barrier: ${dashboardData.primaryDiagnosis.behavioralBarrier} (${dashboardData.primaryDiagnosis.barrierProvenance})
+Diagnostic Confidence: ${dashboardData.primaryDiagnosis.confidenceScore}% (${dashboardData.primaryDiagnosis.confidenceLevel})
+
+## AI Synthesis
+${dashboardData.primaryDiagnosis.summary}
+
+## 5-Stage ADOPT Health Matrix:
+${dashboardData.healthScoresList.map((h) => `- ${h.name} (${h.letter}): ${h.percentageString} - ${h.insightText} ${h.isBottleneck ? '[PRIMARY BOTTLENECK]' : h.isSecondary ? '[SECONDARY BOTTLENECK]' : ''}`).join('\n')}
+
+${dashboardData.largestBehavioralDrop ? `## Largest Behavioral Break:\n${dashboardData.largestBehavioralDrop.fromStage} -> ${dashboardData.largestBehavioralDrop.toStage} (${dashboardData.largestBehavioralDrop.delta} pts)\n${dashboardData.largestBehavioralDrop.explanation}\n` : ''}
+
+## Why Adoption Is Breaking (Ranked Root Causes):
+${dashboardData.rootCauses.map((rc, i) => `${i + 1}. ${rc.cause} [${rc.adoptImpact}] (Strength: ${rc.evidenceStrength})\n   ${rc.explanation}\n   Evidence: ${rc.evidence.join('; ')}`).join('\n\n')}
+
+## Recommended Initiatives (Prioritized):
+${dashboardData.initiatives.map((init) => `### ${init.priorityLabel}: ${init.title}
+${init.shortDescription}
+- Why This: ${init.whyThis}
+- Target Behavior: ${init.behavioralObjective}
+- Impact: ${init.impact} | Effort: ${init.effort} | Strength: ${init.evidenceStrength}
+- Primary Metric: ${init.measurementPlan?.primaryMetric?.name || init.successMetric || 'Task completion'} (${init.measurementPlan?.primaryMetric?.baseline || 'Baseline'} -> ${init.measurementPlan?.primaryMetric?.target || 'Target'})
+`).join('\n')}
+
+## 90-Day Projected Business Outcomes:
+${dashboardData.outcomes.map((o) => `- ${o.metricLabel}: ${o.projectedLift} (Current: ${o.currentValue} -> Target: ${o.targetValue}) [${o.directionalImpact}]`).join('\n')}
+`;
+
+    const blob = new Blob([exportText], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AdoptIQ-Behavioral-Brief-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const toggleAssetCheck = (assetKey: string) => {
+    setSelectedAssets((prev) =>
+      prev.includes(assetKey) ? prev.filter((k) => k !== assetKey) : [...prev, assetKey]
+    );
+  };
+
+  const openStageDrilldown = (stageItem: StageHealthItem) => {
+    setSelectedStageDrilldown(stageItem);
+    setIsStageDrilldownOpen(true);
+  };
+
+  const getModeBadge = (mode: string) => {
+    switch (mode) {
+      case 'intelligence':
+        return { label: 'Mode C — Intelligence Mode', bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' };
+      case 'diagnostic':
+        return { label: 'Mode B — Diagnostic Mode', bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' };
+      default:
+        return { label: 'Mode A — Hypothesis Mode', bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' };
+    }
+  };
+
+  const modeBadge = getModeBadge(dashboardData.reportMode);
 
   return (
     <main className={`app-shell app-shell--${engineState}`}>
-      <header className="topbar" style={{ paddingBottom: '0.5rem' }}>
-        <div className="brand-mark" aria-label="ADOPT Engine">
-          <span className="brand-mark__shape" />
-          <span className="brand-mark__shape brand-mark__shape--second" />
+      {/* Toast Notifications */}
+      {copiedToast && (
+        <div className="toast-notification">
+          <Check size={16} className="text-emerald" />
+          <span>Dashboard share link copied to clipboard!</span>
+        </div>
+      )}
+      {studioToast && (
+        <div className="toast-notification toast-notification--studio">
+          <Sparkles size={16} style={{ color: '#a78bfa' }} />
+          <span>{studioToast}</span>
+        </div>
+      )}
+
+      {/* Top Bar Header */}
+      <header className="topbar">
+        <div className="topbar__left" onClick={reset} style={{ cursor: 'pointer' }}>
+          <div className="brand-mark" aria-label="AdoptIQ">
+            <span className="brand-mark__shape" />
+            <span className="brand-mark__shape brand-mark__shape--second" />
+          </div>
+          <div className="brand-identity">
+            <span className="brand-title">AdoptIQ<span className="brand-dot">.ai</span></span>
+            <span className="brand-tagline">Behavioral Intelligence Engine</span>
+          </div>
+        </div>
+
+        <div className="topbar__right">
+          {engineState === 'results' && (
+            <button
+              type="button"
+              className="btn-dashboard-action"
+              onClick={reset}
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '12.5px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+              }}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              <span>New Diagnosis</span>
+            </button>
+          )}
+          <div className="topbar__status">
+            <span className="status-dot" />
+            <span className="status-label">Behavioral Reasoning Active</span>
+          </div>
+          <div className="topbar__divider" />
+          <span className="topbar__edition">Enterprise Strategic Edition</span>
         </div>
       </header>
 
+      {/* 1. Initial State: Diagnose / Search Bar */}
       {engineState === 'diagnose' && (
         <section className="diagnose-view" aria-labelledby="page-title">
           <div className="hero-copy">
             <p className="eyebrow">ADOPT FRAMEWORK <span>·</span> BEHAVIORAL INTELLIGENCE</p>
             <h1 id="page-title">Diagnose your <strong>product adoption</strong></h1>
-            <p className="hero-subtitle">Give the engine messy signals. Get the behavioral reason — and the tailored next move.</p>
+            <p className="hero-subtitle">
+              Tell AdoptIQ what is happening. It determines where adoption is breaking, why it happens, and creates a starting solution your team can execute.
+            </p>
           </div>
 
           <div className="input-stage" style={{ position: 'relative' }}>
-            <CanvasSiriWave state={waveState} activity={activity} />
-            
-            <div className={`command-bar ${isFocused ? 'command-bar--focused' : ''}`} style={{ position: 'relative', zIndex: 10 }}>
+            <CanvasSiriWave state={waveState} activity={input.length > 0 ? 1.2 : 1.0} />
+
+            <div
+              className={`command-bar ${isFocused ? 'command-bar--focused' : ''} ${isMultiLine ? 'command-bar--multiline' : ''}`}
+              style={{ position: 'relative', zIndex: 10 }}
+            >
               <CirclePlus size={22} strokeWidth={1.7} className="command-bar__plus" />
-              <input
-                ref={inputRef}
+              <textarea
+                ref={textareaRef}
                 value={input}
+                rows={1}
                 onChange={(event) => {
                   setInput(event.target.value);
                   setWaveState(event.target.value ? 'listening' : 'idle');
@@ -482,7 +408,12 @@ CRITICAL RULES:
                   setWaveState('listening');
                 }}
                 onBlur={() => setIsFocused(false)}
-                onKeyDown={(event) => event.key === 'Enter' && runDiagnosis()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    runDiagnosis();
+                  }
+                }}
                 placeholder="Enter user problem, telemetry, user feedback, funnel drop-offs"
                 aria-label="Describe your adoption problem"
               />
@@ -498,11 +429,11 @@ CRITICAL RULES:
           </div>
 
           <p className="hero-description">
-            Describe a friction point, telemetry drop-off, or adoption use case. The ADOPT Engine will synthesize an AI summary and focus your initiatives across the 5 behavioral stages.
+            Describe a friction point, telemetry drop-off, or adoption use case. The ADOPT Engine will extrapolate the 5 stages and generate high-impact interventions.
           </p>
 
           <div className="suggestions" aria-label="Suggested problems">
-            {suggestions.map((suggestion, index) => (
+            {suggestions.map((suggestion) => (
               <button
                 key={suggestion.text}
                 type="button"
@@ -512,7 +443,6 @@ CRITICAL RULES:
                   runDiagnosis(suggestion.text);
                 }}
               >
-                <span className="suggestion-card__index">0{index + 1}</span>
                 <span>{suggestion.text}</span>
                 <ArrowUpRight size={15} />
               </button>
@@ -521,350 +451,749 @@ CRITICAL RULES:
 
           <div className="hero-footer">
             <span>Structured around the 5 ADOPT stages</span>
-            <div>{stages.map((stage) => <span key={stage.key}>{stage.label}</span>)}</div>
-          </div>
-        </section>
-      )}
-
-      {engineState === 'analyzing' && (
-        <section className="analysis-view" aria-live="polite">
-          <div className="analysis-orbit"><span /><span /><span /></div>
-          <CanvasSiriWave state={waveState} activity={1.35} />
-          <div className="analysis-status" style={{ position: 'relative', zIndex: 10 }}>
-            <span className="analysis-status__pulse" />
-            <span>{analysisPhases[phaseIndex]}</span>
-          </div>
-          <p className="analysis-caption" style={{ position: 'relative', zIndex: 10 }}>The AI engine is synthesizing your signal into concrete ADOPT initiatives.</p>
-          <div className="analysis-progress" style={{ position: 'relative', zIndex: 10 }}>
-            <span style={{ width: `${(phaseIndex + 1) * 20}%` }} />
-          </div>
-        </section>
-      )}
-
-      {engineState === 'results' && (
-        <section className="results-view" aria-labelledby="results-title" style={{ marginTop: '0', paddingTop: '0' }}>
-          <div className="results-heading" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748b' }}>
-                DIAGNOSIS COMPLETE <span>·</span> 
-                <span style={{ display: 'flex', alignItems: 'center', color: '#10b981', fontWeight: 600 }}>
-                  <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', marginRight: '6px', boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)' }} />
-                  ADOPT COUNSELOR ONLINE
-                </span>
-              </p>
-              <h2 id="results-title" style={{ fontSize: '2.2rem', letterSpacing: '-0.02em', fontWeight: 600, color: '#0f172a', margin: '0.2rem 0 0 0' }}>The adoption story, <strong>made actionable.</strong></h2>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1.5rem' }}>
-              <button 
-                className="reset-button" 
-                onClick={() => {
-                  const el = document.querySelector('.interventions-column');
-                  if (el) {
-                    el.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                style={{ 
-                  padding: '0.5rem 1rem', 
-                  borderRadius: '999px', 
-                  background: '#f8fafc', 
-                  border: '1px solid #e2e8f0',
-                  color: '#334155', 
-                  fontWeight: 500, 
-                  fontSize: '0.85rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  cursor: 'pointer', 
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                ADOPT playbook
-              </button>
-              <button 
-                className="reset-button" 
-                onClick={reset}
-                style={{ 
-                  padding: '0.5rem 1rem', 
-                  borderRadius: '999px', 
-                  background: '#f8fafc', 
-                  border: '1px solid #e2e8f0',
-                  color: '#334155', 
-                  fontWeight: 500, 
-                  fontSize: '0.85rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.4rem', 
-                  cursor: 'pointer', 
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                Run another diagnosis <ArrowUpRight size={16} />
-              </button>
+              <span>Aware</span>
+              <span>·</span>
+              <span>Desire</span>
+              <span>·</span>
+              <span>Open</span>
+              <span>·</span>
+              <span>Proficient</span>
+              <span>·</span>
+              <span>Transform</span>
             </div>
           </div>
+        </section>
+      )}
 
-          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '1.25rem', marginBottom: '1.5rem', padding: '1px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(217, 70, 239, 0.4))' }}>
-            <div className="siri-mesh-bg" />
-            
-            <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(30px) saturate(180%)', WebkitBackdropFilter: 'blur(30px) saturate(180%)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 4px 24px -4px rgba(31, 38, 135, 0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-                <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #d946ef)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 20px rgba(217, 70, 239, 0.3)', marginTop: '2px' }}>
-                  <Sparkles size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4f46e5', fontWeight: 700, marginBottom: '0.5rem' }}>
-                    AI SUMMARY & DIAGNOSIS
-                  </div>
-                  <p style={{ margin: 0, fontSize: '0.98rem', fontWeight: 500, color: '#0f172a', lineHeight: 1.6 }}>
-                    {diagnosis.aiSummary}
-                  </p>
-                </div>
-              </div>
-            </div>
+      {/* 2. Intermediate Loading State: Dedicated Wave Loader Page (Image 2) */}
+      {engineState === 'analyzing' && (
+        <IntermediateLoader phaseIndex={phaseIndex} waveState={waveState} />
+      )}
+
+      {/* 3. Populated Results: Autonomous Behavioral Intelligence Dashboard */}
+      {engineState === 'results' && (
+        isSkeletonResolving ? (
+          <div className="results-skeleton-container" aria-label="Loading diagnostic results">
+            <SkeletonDashboard />
           </div>
-
-          <div style={{ marginBottom: '1.75rem' }}>
-            <div className="stage-nav" role="tablist" aria-label="Adoption stages" style={{ margin: 0 }}>
-              {stages.map((stage) => (
-                <button
-                  key={stage.key}
-                  role="tab"
-                  aria-selected={activeStage === stage.key}
-                  className={activeStage === stage.key ? 'is-active' : ''}
-                  onClick={() => {
-                    setActiveStage(stage.key);
-                    setGenerated(null);
-                  }}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.45rem'
-                  }}
-                >
-                  <span>{stage.label}</span>
-                  {activeStage === stage.key && (
-                    <span 
-                      aria-label="Focus stage"
-                      title="Focus stage"
+        ) : (
+          <div className="results-dashboard-wrapper">
+            <section className="results-dashboard fadeInUp" aria-labelledby="dashboard-heading">
+            {/* A. PAGE CONTEXT & HEADER */}
+            <header className="dashboard-zone-1">
+              <div className="zone-1-header-row">
+                <div className="zone-1-header-left">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span
                       style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: '#fee2e2',
-                        color: '#dc2626',
-                        border: '1.5px solid #f87171',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '14px',
-                        fontWeight: 900,
-                        lineHeight: 1,
-                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.22)',
-                        marginLeft: '4px',
-                        flexShrink: 0
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                        background: modeBadge.bg,
+                        color: modeBadge.text,
+                        border: `1px solid ${modeBadge.border}`,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
                       }}
                     >
-                      !
+                      {modeBadge.label}
                     </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="results-grid">
-            <div className="results-left">
-              <article className="diagnosis-card reveal reveal--one" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', color: '#0f172a', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 32px -8px rgba(0,0,0,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#64748b', textTransform: 'uppercase' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                    PRIMARY DIAGNOSIS
+                    {dashboardData.context.persona && (
+                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                        Target: <strong>{dashboardData.context.persona}</strong>
+                      </span>
+                    )}
                   </div>
-                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#4f46e5', background: 'rgba(99, 102, 241, 0.1)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontWeight: 600 }}>
-                    {currentStageInfo.funnelIndex}
-                  </span>
+                  <h1 id="dashboard-heading" className="dashboard-h1">
+                    {dashboardData.dashboardTitle}
+                  </h1>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.4rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem 0', letterSpacing: '-0.02em' }}>
-                      {diagnosis.stageLabel}
-                    </h3>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace' }}>
-                      Stage Goal: <strong style={{ color: '#334155', fontWeight: 600 }}>{currentStageInfo.definition}</strong>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#3b82f6', lineHeight: 1 }}>
-                      {diagnosis.confidence}%
-                    </div>
-                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'monospace' }}>Confidence</span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0.85rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
-                  <div>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.65rem', color: '#ef4444', fontFamily: 'monospace', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
-                      <Activity size={12} /> Metric At Risk
-                    </span>
-                    <strong style={{ fontSize: '0.82rem', color: '#0f172a', fontWeight: 600, display: 'block' }}>
-                      {diagnosis.metricAtRisk}
-                    </strong>
-                  </div>
-                  <div>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.65rem', color: '#10b981', fontFamily: 'monospace', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
-                      <Zap size={12} /> Expected Lift
-                    </span>
-                    <strong style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 600, display: 'block' }}>
-                      {diagnosis.expectedLift}
-                    </strong>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <span>Psychological Driver:</span>
-                  <strong style={{ color: '#334155' }}>{diagnosis.psychologicalDriver}</strong>
-                </div>
-              </article>
-
-              {/* UPDATED EVIDENCE CARD */}
-              <article className="evidence-card reveal reveal--two" style={{ padding: '1.5rem', borderRadius: '1.25rem', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', color: '#0f172a', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 32px -8px rgba(0,0,0,0.08)', marginTop: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#64748b', textTransform: 'uppercase' }}>
-                    EVIDENCE SIGNALS
-                  </div>
-                  <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', letterSpacing: '0.08em', color: '#475569', fontWeight: 600 }}>
-                    {diagnosis.signals.length} FOUND
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {diagnosis.signals.map((signal, index) => {
-                    const waveColors = ['#8b5cf6', '#0ea5e9', '#3b82f6']; // Violet, Sky Blue, Blue
-                    const color = waveColors[index % waveColors.length];
-
-                    return (
-                      <div key={signal.label} style={{ 
-                        display: 'flex', 
-                        alignItems: 'flex-start', 
-                        gap: '1rem', 
-                        padding: '1rem', 
-                        borderRadius: '0.75rem', 
-                        background: '#ffffff', 
-                        border: '1px solid #e2e8f0',
-                        borderLeft: `3px solid ${color}` 
-                      }}>
-                        <div style={{ color: color, marginTop: '2px' }}>
-                          {index === 0 ? <TrendingDown size={18} /> : index === 1 ? <Clock3 size={18} /> : <MousePointer2 size={18} />}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <strong style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>{signal.label}</strong>
-                          <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>{signal.detail}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <button style={{ 
-                    background: 'none', 
-                    border: 'none', 
-                    color: '#64748b', 
-                    fontSize: '0.75rem', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.35rem', 
-                    cursor: 'pointer',
-                    padding: 0,
-                    transition: 'color 0.2s ease'
-                  }}>
-                    View raw telemetry logs <ArrowUpRight size={14} />
+                <div className="zone-1-actions">
+                  <button className="btn-dashboard-action" onClick={reset} title="Start a new diagnosis">
+                    <RotateCcw size={15} />
+                    <span>New Diagnosis</span>
+                  </button>
+                  <button className="btn-dashboard-action" onClick={handleShare} title="Share link to this dashboard">
+                    <Share2 size={15} />
+                    <span>Share</span>
+                  </button>
+                  <button className="btn-dashboard-action btn-dashboard-action--export" onClick={handleExport} title="Download executive summary markdown">
+                    <Download size={15} />
+                    <span>Export Brief</span>
                   </button>
                 </div>
-              </article>
+              </div>
+            </header>
+
+            {/* B. PRIMARY DIAGNOSIS HERO (FULL WIDTH) */}
+            <section className="primary-diagnosis-hero" aria-label="Primary Diagnosis">
+              <div className="ai-summary-ambient-glow" aria-hidden="true" />
+
+              {/* Card Header: Title on Left, Add Evidence Pill on Right */}
+              <div className="primary-diagnosis-hero__header">
+                <h2 className="primary-diagnosis-hero__title">
+                  <Sparkles size={20} className="primary-diagnosis-sparkle-inline" />
+                  <span>{dashboardData.primaryDiagnosis.title}</span>
+                </h2>
+
+                <button
+                  type="button"
+                  className="btn-add-evidence-hero-pill"
+                  onClick={() => setIsStrengthenModalOpen(true)}
+                  title="Click to add evidence and improve diagnostic confidence"
+                >
+                  <span className="btn-add-evidence-icon-circle">
+                    <Plus size={13} strokeWidth={2.5} />
+                  </span>
+                  <span>Add evidence to improve confidence</span>
+                </button>
+              </div>
+
+              {/* Side-by-Side 2-Column Grid */}
+              <div className="primary-diagnosis-top-grid">
+                {/* Left Column: Problem Summary */}
+                <div className="primary-diagnosis-col-left">
+                  <span className="primary-diagnosis-kicker">DIAGNOSTIC SUMMARY</span>
+                  <p className="primary-diagnosis-hero__summary">
+                    {dashboardData.primaryDiagnosis.summary}
+                  </p>
+                </div>
+
+                {/* Right Column: Recommended Focus Inset Card */}
+                <div className="primary-diagnosis-col-right">
+                  <div className="primary-diagnosis-focus-box">
+                    <span className="recommended-focus-kicker">RECOMMENDED FOCUS</span>
+
+                    <h3 className="recommended-focus-headline">
+                      {dashboardData.strategyBridge?.headline || 'Move users from experimentation → trusted, repeatable workflows'}
+                    </h3>
+
+                    <p className="recommended-focus-desc">
+                      {dashboardData.strategyBridge?.description || 'Prioritize interventions that reduce verification effort, guide users into recurring tasks, and make successful workflows easy to repeat.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* C. ADOPT BEHAVIORAL JOURNEY (5 STAGES LEFT-TO-RIGHT) */}
+            <section className="adopt-journey-section" aria-label="ADOPT Behavioral Journey">
+              <div className="adoption-health-grid">
+                {dashboardData.healthScoresList.map((stageItem) => {
+                  const isPrimary = stageItem.role === 'PRIMARY FOCUS' || stageItem.isBottleneck;
+                  const isHealthy = stageItem.role === 'HEALTHY UPSTREAM';
+                  const isNullScore = stageItem.score === null || stageItem.percentageString === '—';
+                  const scoreNum = stageItem.score ?? (stageItem.percentageString ? parseInt(stageItem.percentageString) : 50);
+                  const percentColor = isNullScore ? '#94a3b8' : scoreNum >= 60 ? '#16a34a' : scoreNum >= 25 ? '#ea580c' : '#ef4444';
+                  const letterBadgeClass = isPrimary
+                    ? 'stage-letter-badge--bottleneck'
+                    : (isHealthy || (!isNullScore && scoreNum >= 60))
+                    ? 'stage-letter-badge--healthy'
+                    : 'stage-letter-badge--inactive';
+
+                  return (
+                    <div
+                      key={stageItem.stage}
+                      className={`adoption-stage-card ${isPrimary ? 'adoption-stage-card--primary-focus' : ''}`}
+                      onClick={() => openStageDrilldown(stageItem)}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                      title="Click to inspect behavioral breakdown"
+                    >
+                      <div className="adoption-stage-card__header">
+                        <div className="adoption-stage-card__title-group">
+                          <span className={`stage-letter-badge ${letterBadgeClass}`}>
+                            {stageItem.letter}
+                          </span>
+                          <span className="stage-card-name">{stageItem.name}</span>
+                        </div>
+                        {isNullScore ? (
+                          <button
+                            type="button"
+                            className="stage-card-btn-add-telemetry"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsStrengthenModalOpen(true);
+                            }}
+                            title="Add evidence to evaluate stage"
+                          >
+                            <Plus size={13} strokeWidth={2.5} />
+                          </button>
+                        ) : (
+                          <strong className="stage-card-percentage" style={{ color: percentColor }}>
+                            {stageItem.percentageString || `${scoreNum}%`}
+                          </strong>
+                        )}
+                      </div>
+
+                      <p className="adoption-stage-card__insight" style={{ minHeight: '38px', marginTop: '10px' }}>
+                        {stageItem.specificMeaning || stageItem.insightText || (
+                          isNullScore ? 'Awaiting observed telemetry or survey signals...' :
+                          stageItem.stage === 'AWARE' ? 'High awareness through comms & campaigns' :
+                          stageItem.stage === 'DESIRE' ? 'Users see limited personal value' :
+                          stageItem.stage === 'OPEN' ? 'Willing to try but inconsistent' :
+                          stageItem.stage === 'PROFICIENT' ? 'Struggle with getting good outcomes' :
+                          'Not yet part of daily workflow'
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Largest Behavioral Break Callout */}
+              {dashboardData.largestBehavioralDrop && (
+                <div className="largest-break-connector-banner" style={{ marginTop: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ padding: '6px 8px', background: '#ffedd5', borderRadius: '10px', color: '#ea580c' }}>
+                      <TrendingDown size={18} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#c2410c', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Largest Adoption Break
+                        </span>
+                        <strong style={{ fontSize: '13.5px', color: '#9a3412' }}>
+                          {ADOPT_META[dashboardData.largestBehavioralDrop.fromStage].name} {dashboardData.healthScoresList.find(s => s.stage === dashboardData.largestBehavioralDrop?.fromStage)?.percentageString} → {ADOPT_META[dashboardData.largestBehavioralDrop.toStage].name} {dashboardData.healthScoresList.find(s => s.stage === dashboardData.largestBehavioralDrop?.toStage)?.percentageString} ({dashboardData.largestBehavioralDrop.delta} pts)
+                        </strong>
+                      </div>
+                      <p style={{ margin: '2px 0 0', fontSize: '12.5px', color: '#7c2d12' }}>
+                        {dashboardData.largestBehavioralDrop.explanation}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    className="btn-dashboard-action"
+                    onClick={() => setIsDiagnosisExplanationOpen(true)}
+                    style={{ background: '#ffffff', borderColor: '#fed7aa', color: '#c2410c', flexShrink: 0, height: '32px', fontSize: '11.5px' }}
+                  >
+                    <span>Inspect breakdown</span>
+                    <ArrowRight size={12} />
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {/* SECTIONS D, E, F: 2-COLUMN MAIN HIERARCHY */}
+            <div className="dashboard-zone-2">
+              {/* LEFT COLUMN (32% width): D. ROOT CAUSES / EVIDENCE */}
+              <div className="zone-2-column zone-2-column--evidence">
+                {/* D. EVIDENCE BEHIND PROBLEM / ROOT CAUSES */}
+                <div className="column-header">
+                  <div>
+                    <h3 className="column-title">Evidence Behind Problem</h3>
+                    <p className="column-subtitle" style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
+                      Identified behavioral &amp; telemetry signals
+                    </p>
+                  </div>
+                  <span className="count-badge">{dashboardData.rootCauses?.length || 3} Signals</span>
+                </div>
+
+                <div className="evidence-alerts-stack">
+                  {dashboardData.rootCauses.map((rc, idx) => {
+                    const rawCrit = ((rc as any).criticality || '').toUpperCase();
+                    const variant = rawCrit === 'HIGH' ? 'critical' : rawCrit === 'MEDIUM' ? 'warning' : rawCrit === 'LOW' ? 'info' : (idx === 0 ? 'critical' : idx === 1 ? 'warning' : 'info');
+                    return (
+                      <article
+                        key={rc.id}
+                        className={`evidence-alert-card evidence-alert-card--${variant}`}
+                      >
+                        <div className={`evidence-alert-icon-circle evidence-alert-icon-circle--${variant}`}>
+                          <AlertCircle size={16} strokeWidth={2.5} />
+                        </div>
+                        <div className="evidence-alert-content">
+                          <h4 className="evidence-alert-title" style={{ margin: '0 0 3px', fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
+                            {rc.cause}
+                          </h4>
+                          <p className="evidence-alert-subtext" style={{ margin: 0, fontSize: '12px', color: '#475569', lineHeight: 1.45 }}>
+                            {rc.explanation}
+                          </p>
+                        </div>
+                      </article>
+                    );
+                  })}
+
+                  {/* Greyed Empty Cards to fill 5 total slots and match Prioritized Initiatives height */}
+                  {Array.from({ length: Math.max(1, 5 - (dashboardData.rootCauses?.length || 0)) }).map((_, emptyIdx) => (
+                    <article
+                      key={`empty-evidence-slot-${emptyIdx}`}
+                      className="evidence-alert-card evidence-alert-card--empty"
+                      onClick={() => setIsStrengthenModalOpen(true)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setIsStrengthenModalOpen(true);
+                        }
+                      }}
+                      title="Click to add evidence and uncover more insights"
+                    >
+                      <div className="evidence-alert-icon-circle evidence-alert-icon-circle--empty">
+                        <Plus size={16} strokeWidth={2.5} />
+                      </div>
+                      <div className="evidence-alert-content">
+                        <h4 className="evidence-alert-title" style={{ margin: '0 0 2px', fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
+                          Add evidence for more insights
+                        </h4>
+                        <p className="evidence-alert-subtext" style={{ margin: 0, fontSize: '11.5px', color: '#94a3b8' }}>
+                          Uncover additional telemetry &amp; behavioral signals
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN (68% width): F. PRIORITIZED INITIATIVES */}
+              <div className="zone-2-column zone-2-column--initiatives">
+                <div className="column-header">
+                  <div>
+                    <h3 className="column-title">Prioritized Initiatives</h3>
+                    <p className="column-subtitle">Targeted UX interventions ordered by root-cause remediation</p>
+                  </div>
+                  <span className="count-badge count-badge--primary">{dashboardData.initiatives.length} High-Impact Plays</span>
+                </div>
+
+                <div className="initiatives-list">
+                  {/* Primary Hero Recommendation (P0 · START HERE) */}
+                  {dashboardData.initiatives[0] && (
+                    <article className="initiative-hero-card">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="initiative-hero-badge">
+                            <Sparkles size={12} />
+                            <span>{dashboardData.initiatives[0].heroBadge || 'P0 · START HERE'}</span>
+                          </span>
+                          {(dashboardData.initiatives[0].isPlaybookMatch !== false && (dashboardData.initiatives[0].isPlaybookMatch || isPlaybookInitiative(dashboardData.initiatives[0].title))) ? (
+                            <span className="playbook-proven-badge" title="Selected from official ADOPT Playbook Registry">
+                              <BookOpen size={11} />
+                              <span>ADOPT Playbook</span>
+                            </span>
+                          ) : (
+                            <span className="ai-custom-badge" title="Dynamic edge-case intervention tailored by Gemini AI">
+                              <Sparkles size={11} />
+                              <span>AI Custom Play</span>
+                            </span>
+                          )}
+                        </div>
+                        <span className="root-cause-ref-pill">
+                          {dashboardData.initiatives[0].rootCauseBadge || 'Addresses RC01'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="initiative-hero-title">
+                          {dashboardData.initiatives[0].title}
+                        </h4>
+                        <p className="initiative-hero-desc" style={{ marginTop: '4px' }}>
+                          {dashboardData.initiatives[0].shortDescription}
+                        </p>
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div className="initiative-hero-footer" style={{ marginTop: '12px' }}>
+                        <div className="initiative-hero-meta">
+                          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                            Impact: <strong style={{ color: '#0f172a' }}>{dashboardData.initiatives[0].impact}</strong>
+                          </span>
+                          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                            Effort: <strong style={{ color: '#0f172a' }}>{dashboardData.initiatives[0].effort}</strong>
+                          </span>
+                          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                            Evidence: <strong style={{ color: '#15803d' }}>{dashboardData.initiatives[0].evidenceStrength}</strong>
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+                          <button
+                            type="button"
+                            className="btn-why-recommended"
+                            onClick={() => {
+                              setReasoningInitiative(dashboardData.initiatives[0]);
+                              setIsWhyRecommendedOpen(true);
+                            }}
+                          >
+                            <span>Why recommended?</span>
+                            <ArrowRight size={12} />
+                          </button>
+
+                          <div style={{ position: 'relative' }}>
+                            <button
+                              type="button"
+                              className="btn-hero-create-solution"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSolutionStudioDropdownOpen(
+                                  solutionStudioDropdownOpen === dashboardData.initiatives[0].id
+                                    ? null
+                                    : dashboardData.initiatives[0].id
+                                );
+                              }}
+                            >
+                              <span>Create solution</span>
+                              <ArrowRight size={14} />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {solutionStudioDropdownOpen === dashboardData.initiatives[0].id && (
+                              <div className="solution-studio-dropdown">
+                                <button
+                                  type="button"
+                                  className="solution-studio-dropdown-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    triggerStudioToast('Create User Flow');
+                                  }}
+                                >
+                                  <Layers size={14} />
+                                  <span>Create User Flow</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="solution-studio-dropdown-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    triggerStudioToast('Create UX Design');
+                                  }}
+                                >
+                                  <Layout size={14} />
+                                  <span>Create UX Design</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="solution-studio-dropdown-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    triggerStudioToast('Create Recommendation Deck');
+                                  }}
+                                >
+                                  <FileText size={14} />
+                                  <span>Create Recommendation Deck</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  )}
+
+                  {/* Secondary Quieter Initiatives (Cards 2 to 6) */}
+                  {dashboardData.initiatives.slice(1, 6).map((init, i) => (
+                    <article
+                      key={init.id}
+                      className="initiative-row-card"
+                      onClick={() => setActiveInitiative(init)}
+                      style={{
+                        cursor: 'pointer',
+                        borderColor: activeInitiative?.id === init.id ? '#8b5cf6' : undefined,
+                      }}
+                    >
+                      <span className="initiative-number">0{i + 2}</span>
+
+                      <div className="initiative-main-content">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <h4 className="initiative-title">{init.title}</h4>
+                          {(init.isPlaybookMatch !== false && (init.isPlaybookMatch || isPlaybookInitiative(init.title))) ? (
+                            <span className="playbook-proven-badge" style={{ fontSize: '9.5px', padding: '1px 6px' }}>
+                              <BookOpen size={9} />
+                              <span>Playbook</span>
+                            </span>
+                          ) : (
+                            <span className="ai-custom-badge" style={{ fontSize: '9.5px', padding: '1px 6px' }}>
+                              <Sparkles size={9} />
+                              <span>AI Custom</span>
+                            </span>
+                          )}
+                          <span className="root-cause-ref-pill" style={{ fontSize: '10px', padding: '1px 6px' }}>
+                            {init.rootCauseBadge || `Addresses RC0${Math.min(3, i + 2)}`}
+                          </span>
+                        </div>
+                        <p className="initiative-description">{init.shortDescription}</p>
+
+                        <div className="stage-tags-group">
+                          {init.targetedStages.map((st) => {
+                            const stLower = st.toLowerCase();
+                            return (
+                              <span
+                                key={st}
+                                className={`targeted-stage-pill targeted-stage-pill--${stLower}`}
+                              >
+                                {st.charAt(0).toUpperCase() + st.slice(1).toLowerCase()}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="initiative-impact-meter">
+                        <span className="impact-meter-label">Impact</span>
+                        <div className="impact-meter-row">
+                          <div className="impact-meter-track">
+                            <div
+                              className="impact-meter-fill"
+                              style={{ width: `${init.priorityScore}%` }}
+                            />
+                          </div>
+                          <span className="impact-meter-val">
+                            {init.impact === 'High' ? 'High' : init.impact === 'Medium' ? 'Med' : 'Low'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="initiative-action-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', position: 'relative' }}>
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            type="button"
+                            className="btn-create-solution-pill"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSolutionStudioDropdownOpen(
+                                solutionStudioDropdownOpen === init.id ? null : init.id
+                              );
+                            }}
+                          >
+                            Create solution
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {solutionStudioDropdownOpen === init.id && (
+                            <div className="solution-studio-dropdown">
+                              <button
+                                type="button"
+                                className="solution-studio-dropdown-item"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  triggerStudioToast('Create User Flow');
+                                }}
+                              >
+                                <Layers size={14} />
+                                <span>Create User Flow</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="solution-studio-dropdown-item"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  triggerStudioToast('Create UX Design');
+                                }}
+                              >
+                                <Layout size={14} />
+                                <span>Create UX Design</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="solution-studio-dropdown-item"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  triggerStudioToast('Create Recommendation Deck');
+                                }}
+                              >
+                                <FileText size={14} />
+                                <span>Create Recommendation Deck</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn-why-recommended"
+                          style={{ fontSize: '11px', color: '#64748b' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReasoningInitiative(init);
+                            setIsWhyRecommendedOpen(true);
+                          }}
+                        >
+                          Why recommended?
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="interventions-column">
-              <div className="intervention-heading reveal reveal--one">
-                <div>
-                  <p className="eyebrow">FROM DIAGNOSIS TO INITIATIVES</p>
-                  <h3>Recommended <strong>Initiatives</strong></h3>
-                </div>
-                <span className="intervention-count">{diagnosis.interventions.length < 10 ? `0${diagnosis.interventions.length}` : diagnosis.interventions.length} moves</span>
-              </div>
-              
-              <div className="intervention-intro reveal reveal--one" style={{ padding: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', borderLeft: '4px solid #6366f1', borderRadius: '0 0.5rem 0.5rem 0', marginBottom: '1.5rem' }}>
-                <p style={{ margin: 0, color: '#1e293b', fontSize: '0.94rem', lineHeight: 1.6 }}>
-                  <strong style={{ color: '#4f46e5' }}>High-impact initiatives mapped to move users through the {currentStageInfo.label} stage ({currentStageInfo.definition}).</strong> {diagnosis.stageFocusPrescription}
+            {/* H. EXPECTED OUTCOME STRIP */}
+            <section className="expected-outcome-strip" aria-label="Expected Behavioral Outcome">
+              <div className="expected-outcome-strip__left">
+                <span className="expected-outcome-kicker">EXPECTED OUTCOME</span>
+                <p className="expected-outcome-desc">
+                  Based on similar organizations, these initiatives can improve WAU from 11% → 35–45% in 90 days.
                 </p>
               </div>
 
-              {diagnosis.interventions.map((intervention, index) => (
-                <article className={`intervention-card reveal reveal--${index + 2}`} key={intervention.title}>
-                  <div className="intervention-card__top">
-                    <span>{index + 1 < 10 ? `0${index + 1}` : index + 1} — {intervention.priority}</span>
-                    <span>{intervention.impact} impact</span>
+              <div className="expected-outcome-strip__metrics">
+                <div className="expected-outcome-metric-item">
+                  <div className="expected-outcome-metric-icon-pod">
+                    <Activity size={15} />
                   </div>
-                  <h4>{intervention.title}</h4>
-                  <p>{generated === index ? `Generated implementation spec for ${intervention.title}: Tailored interaction blueprint to resolve ${diagnosis.behavioralPattern.toLowerCase()} and drive ${currentStageInfo.definition.toLowerCase()}.` : intervention.description}</p>
-                  <div className="intervention-card__footer">
-                    <div className="chips">
-                      <span>{intervention.impact} impact</span>
-                      <span>{intervention.effort} effort</span>
-                    </div>
-                    <button onClick={() => setGenerated(index)} className={generated === index ? 'is-generated' : ''}>
-                      {generated === index ? <><Check size={15} /> Blueprint ready</> : <>Generate concept <ArrowUpRight size={15} /></>}
+                  <div className="expected-outcome-metric-data">
+                    <span className="expected-outcome-metric-val">
+                      {dashboardData.northStarMetric?.lift && dashboardData.northStarMetric.lift !== 'Directional lift'
+                        ? dashboardData.northStarMetric.lift
+                        : '+24–34%'}
+                    </span>
+                    <span className="expected-outcome-metric-lbl">Increase in WAU</span>
+                  </div>
+                </div>
+
+                <div className="expected-outcome-metric-item">
+                  <div className="expected-outcome-metric-icon-pod">
+                    <Zap size={15} />
+                  </div>
+                  <div className="expected-outcome-metric-data">
+                    <span className="expected-outcome-metric-val">
+                      {dashboardData.outcomes?.[0]?.projectedLift || '+2.1x'}
+                    </span>
+                    <span className="expected-outcome-metric-lbl">Repeat usage rate</span>
+                  </div>
+                </div>
+
+                <div className="expected-outcome-metric-item">
+                  <div className="expected-outcome-metric-icon-pod">
+                    <Clock3 size={15} />
+                  </div>
+                  <div className="expected-outcome-metric-data">
+                    <span className="expected-outcome-metric-val">
+                      {dashboardData.outcomes?.[1]?.projectedLift || '-35%'}
+                    </span>
+                    <span className="expected-outcome-metric-lbl">Time to first value</span>
+                  </div>
+                </div>
+
+                <div className="expected-outcome-metric-item">
+                  <div className="expected-outcome-metric-icon-pod">
+                    <CheckCircle2 size={15} />
+                  </div>
+                  <div className="expected-outcome-metric-data">
+                    <span className="expected-outcome-metric-val">
+                      {dashboardData.outcomes?.[2]?.projectedLift || '+28%'}
+                    </span>
+                    <span className="expected-outcome-metric-lbl">Task success rate</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="expected-outcome-strip__right">
+                <button
+                  type="button"
+                  className="btn-view-impact-model-strip"
+                  onClick={() => setIsImpactModalOpen(true)}
+                >
+                  <span>View impact model</span>
+                </button>
+              </div>
+            </section>
+          </section>
+
+          {/* G. STICKY BOTTOM DOCK: AI SOLUTION CREATOR */}
+          <aside className="sticky-ai-solution-creator-dock" aria-label="AI Solution Creator Dock">
+            <div className="creator-dock-inner">
+              <div className="creator-dock-left">
+                <div className="creator-dock-badge">
+                  <Sparkles size={13} />
+                  <span>AI SOLUTION CREATOR</span>
+                </div>
+                <h4 className="creator-dock-title" style={{ fontSize: '13px', margin: '2px 0 0', fontWeight: 600, color: '#0f172a' }}>
+                  Selected: <strong style={{ color: '#7c3aed' }}>{activeInitiative?.title || dashboardData.initiatives[0]?.title || 'Inline Verification & Confidence'}</strong>
+                </h4>
+              </div>
+
+              {/* Dynamic Deliverable Toggles */}
+              <div className="creator-dock-checklist">
+                {getDeliverablesForInitiative(activeInitiative || dashboardData.initiatives[0]).map((item) => {
+                  const isChecked = selectedAssets.includes(item.key) || true;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={`dock-check-chip ${isChecked ? 'dock-check-chip--active' : ''}`}
+                      onClick={() => toggleAssetCheck(item.key)}
+                      title={item.detail}
+                      aria-pressed={isChecked}
+                    >
+                      <span className={`dock-checkbox ${isChecked ? 'dock-checkbox--checked' : ''}`}>
+                        {isChecked && <Check size={11} strokeWidth={3.5} />}
+                      </span>
+                      <span className="dock-check-label">{item.label}</span>
                     </button>
-                  </div>
-                  {generated === index && (
-                    <div className="concept-note">
-                      <Sparkles size={14} /> Blueprint ready · expected stage lift {diagnosis.expectedLift}
-                    </div>
-                  )}
-                </article>
-              ))}
+                  );
+                })}
+              </div>
+
+              <div className="creator-dock-right">
+                <button
+                  className="btn-dock-generate-pack"
+                  onClick={() => {
+                    if (!activeInitiative && dashboardData.initiatives[0]) {
+                      setActiveInitiative(dashboardData.initiatives[0]);
+                    }
+                    setIsSolutionModalOpen(true);
+                  }}
+                >
+                  <Sparkles size={15} />
+                  <span>✦ Generate solution</span>
+                  <ArrowRight size={15} />
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
+          </aside>
+        </div>
+        )
       )}
 
-      <footer className="page-footer">
-        <span>ADOPT Framework Engine</span>
-        <span>Aware · Desire · Open · Proficient · Transform</span>
-        <span>© 2026</span>
-      </footer>
+      {/* Solution Pack Modal */}
+      <SolutionPackModal
+        isOpen={isSolutionModalOpen}
+        onClose={() => setIsSolutionModalOpen(false)}
+        dashboardData={dashboardData}
+        activeInitiative={activeInitiative}
+      />
 
-      <div style={{ display: 'none' }}>
-        <style>
-          {`
-            @keyframes siriSpin {
-              0% { transform: rotate(0deg) scale(1); }
-              50% { transform: rotate(180deg) scale(1.15); }
-              100% { transform: rotate(360deg) scale(1); }
-            }
-            @keyframes pillPopDown {
-              0% { opacity: 0; transform: translateY(-10px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
-            .siri-mesh-bg {
-              position: absolute;
-              top: -50%;
-              left: -50%;
-              width: 200%;
-              height: 200%;
-              background: 
-                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
-                radial-gradient(circle at 30% 40%, rgba(217, 70, 239, 0.15), transparent 40%),
-                radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.15), transparent 40%);
-              animation: siriSpin 15s linear infinite;
-              z-index: 0;
-              pointer-events: none;
-            }
-          `}
-        </style>
-      </div>
+      {/* Impact Model Simulation Modal */}
+      <ImpactModelModal
+        isOpen={isImpactModalOpen}
+        onClose={() => setIsImpactModalOpen(false)}
+        dashboardData={dashboardData}
+      />
+
+      {/* Stage Drilldown Modal ("Why this score?") */}
+      <StageDrilldownModal
+        isOpen={isStageDrilldownOpen}
+        onClose={() => setIsStageDrilldownOpen(false)}
+        stageItem={selectedStageDrilldown}
+      />
+
+      {/* Diagnosis Explanation Modal ("Why this diagnosis?") */}
+      <DiagnosisExplanationModal
+        isOpen={isDiagnosisExplanationOpen}
+        onClose={() => setIsDiagnosisExplanationOpen(false)}
+        primaryDiagnosis={dashboardData.primaryDiagnosis}
+        context={dashboardData.context}
+        signals={dashboardData.signals}
+      />
+
+      {/* Why Recommended Modal (Reasoning Chain) */}
+      <WhyRecommendedModal
+        isOpen={isWhyRecommendedOpen}
+        onClose={() => setIsWhyRecommendedOpen(false)}
+        initiative={reasoningInitiative}
+      />
+
+      {/* Strengthen Diagnosis Modal */}
+      <StrengthenDiagnosisModal
+        isOpen={isStrengthenModalOpen}
+        onClose={() => setIsStrengthenModalOpen(false)}
+        missingEvidence={dashboardData.missingEvidence}
+        context={dashboardData.context}
+        onReDiagnoseWithEvidence={(newQuery) => runDiagnosis(newQuery)}
+      />
     </main>
   );
 }
